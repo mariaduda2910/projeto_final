@@ -1,6 +1,7 @@
 ﻿// Constantes globais: cores, textos, endpoints, chaves de storage
+import 'package:flutter/material.dart';
+
 /// Constantes globais da aplicação.
-/// Alterar aqui muda em toda a app automaticamente.
 class AppConstants {
   // Nomes e textos
   static const String appName = 'Algarve Explorer';

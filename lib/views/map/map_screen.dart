@@ -1,1 +1,15 @@
-﻿// Tela: Mapa com localização e POIs (Laura)
+﻿// Tela: Mapa com localização e POIs 
+
+import 'package:flutter/material.dart';
+
+class MapScreen extends StatelessWidget {
+  const MapScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Mapa')),
+      body: const Center(child: Text('Página Mapa')),
+    );
+  }
+}
