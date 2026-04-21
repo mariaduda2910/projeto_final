@@ -1,0 +1,1 @@
+﻿// Modelo: Sessão de autenticação

@@ -1,0 +1,1 @@
+﻿// Service: persistência local (SharedPreferences)

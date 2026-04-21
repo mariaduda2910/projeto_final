@@ -1,0 +1,1 @@
+﻿// Modelo: Utilizador (Turista)

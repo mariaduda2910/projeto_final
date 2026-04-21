@@ -1,0 +1,1 @@
+﻿// Provider: estado da localização
