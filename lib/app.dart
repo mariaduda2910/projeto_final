@@ -25,9 +25,33 @@ class MyApp extends StatelessWidget {
         title: 'Algarve Explorer',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        initialRoute: AppRoutes.login,
+        initialRoute: AppRoutes.map, // Começa na tela de login
         routes: AppRoutes.routes,
       ),
     );
   }
 }
+
+/*
+App inicia
+   ↓
+MyApp
+   ↓
+Providers são criados (estado global)
+   ↓
+Vai para login (initialRoute)
+   ↓
+Utilizador faz login
+   ↓
+AuthProvider guarda sessão
+   ↓
+Vai para MapScreen
+   ↓
+LocationProvider obtém localização
+   ↓
+PoiProvider chama API (Geoapify)
+   ↓
+Recebe lista de locais
+   ↓
+MapScreen mostra markers
+*/
