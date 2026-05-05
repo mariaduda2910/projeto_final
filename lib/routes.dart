@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'views/login/login_screen.dart';
 import 'views/home/home_screen.dart';
-import 'views/map/map_screen.dart';
+import 'views/map/poi_explorer_screen.dart';
 import 'views/list/list_screen.dart';
 import 'views/detail/detail_screen.dart';
 
@@ -19,7 +19,7 @@ class AppRoutes {
     return {
       login: (context) => const LoginScreen(),
       home: (context) => const HomeScreen(),
-      map: (context) => const MapScreen(),
+      map: (context) => const PoiExplorerScreen(),
       list: (context) => const ListScreen(),
       detail: (context) => const DetailScreen(),
     };

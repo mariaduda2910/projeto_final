@@ -36,7 +36,7 @@ class PoiProvider extends ChangeNotifier {
         horaAbertura: '00:00',
         horaFecho: '23:59',
         avaliacao: 4.9,
-        imagemUrl: null,
+        //imagemUrl: null,
       ),
       PoiModel(
         id: '2',
@@ -49,7 +49,7 @@ class PoiProvider extends ChangeNotifier {
         horaAbertura: '08:00',
         horaFecho: '20:00',
         avaliacao: 4.8,
-        imagemUrl: null,
+        //imagemUrl: null,
       ),
     ];
     
