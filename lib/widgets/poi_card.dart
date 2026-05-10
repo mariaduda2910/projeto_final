@@ -43,7 +43,7 @@ class PoiCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppSpacing.borderRadius),
                 ),
                 child: Icon(
-                  _iconeCategoria(poi.categoria),
+                  _iconeCategoria(poi.categoria ?? ''),
                   color: AppColors.primary,
                 ),
               ),
@@ -55,14 +55,14 @@ class PoiCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      poi.nome,
+                      (poi.nome ?? ' '),
                       style: Theme.of(context).textTheme.titleMedium,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
-                      poi.endereco,
+                      poi.endereco ?? '',
                       style: Theme.of(context).textTheme.bodySmall,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

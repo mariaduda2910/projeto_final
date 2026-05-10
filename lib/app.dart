@@ -6,6 +6,7 @@ import 'providers/auth_provider.dart';
 import 'providers/location_provider.dart';
 import 'providers/poi_provider.dart';
 import 'routes.dart';
+import 'widgets/shell_layout.dart'; 
 
 /// Widget raiz da aplicação.
 /// Configura tema, providers globais e rotas.
@@ -24,9 +25,22 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Algarve Explorer',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        initialRoute: AppRoutes.map, // Começa na tela de login
-        routes: AppRoutes.routes,
+        theme: AppTheme.lightTheme, 
+        initialRoute: '/shell', // Começa na tela de login
+         // ROTAS: define '/shell' PRIMEIRO, depois as outras
+        routes: {
+          '/shell': (context) => const ShellLayout(),  // ← ANTES das outras
+          ...AppRoutes.routes,  // ← Depois expande as do routes.dart
+        },
+        
+        // Fallback para rotas não definidas (segurança)
+        onUnknownRoute: (settings) {
+          return MaterialPageRoute(
+            builder: (context) => const Scaffold(
+              body: Center(child: Text('Página não encontrada')),
+            ),
+          );
+        },
       ),
     );
   }

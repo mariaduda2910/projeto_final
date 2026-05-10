@@ -18,7 +18,7 @@ import 'register_modal.dart';
 /// Integração:
 /// - Provider para autenticação (AuthProvider)
 /// - Validação de email e password
-/// - Navegação automática para /home ao fazer login com sucesso
+/// - Navegação automática para /shell ao fazer login com sucesso
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -82,14 +82,17 @@ class _LoginScreenState extends State<LoginScreen>
   /// - Se sucesso: navega para /home
   /// - Se erro: exibe erro no AuthProvider
   Future<void> _fazerLogin() async {
+    print(' Login iniciado...');  // ← ADICIONA
     if (_formKey.currentState?.validate() ?? false) {
       final sucesso = await context.read<AuthProvider>().login(
             _emailController.text.trim(),
             _passwordController.text,
           );
-      
+           print(' Login sucesso: $sucesso');  
+          print(' mounted: $mounted');  
       if (sucesso && mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
+        print('Navegando para /shell...'); 
+        Navigator.pushReplacementNamed(context, '/shell'); /// Quando faz login com sucesso, vai para /shell em vez de /home.
       }
     }
   }
