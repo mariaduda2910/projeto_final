@@ -10,9 +10,6 @@ import '../../services/geoapify_service.dart';
 import '../../widgets/poi_marker.dart';
 
 /// Página do Mapa - Algarve Explorer v2.0
-/// 
-/// Lógica: Mantém a tua (Geolocator + Geoapify API)
-/// UI: Novo estilo Airbnb com DraggableScrollableSheet + PoiMarkerCard
 class PoiExplorerScreen extends StatefulWidget {
   const PoiExplorerScreen({super.key});
 
@@ -21,8 +18,46 @@ class PoiExplorerScreen extends StatefulWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// ═══ ESTADO (LÓGICA ORIGINAL — NÃO MEXER ══════════════════════════
+// CONFIGURAÇÃO DE CORES POR CATEGORIA
 // ═══════════════════════════════════════════════════════════════════
+
+class _CategoriaUI {
+  final String label;
+  final IconData icon;
+  final Color cor;
+  const _CategoriaUI(this.label, this.icon, this.cor);
+}
+
+final Map<String, _CategoriaUI> _categoriaUI = {
+  'catering.restaurant': const _CategoriaUI('Restaurantes', Icons.restaurant, Color(0xFFFF6B6B)),
+  'catering.cafe': const _CategoriaUI('Cafés', Icons.local_cafe, Color(0xFFFFB347)),
+  'catering.bar': const _CategoriaUI('Bares', Icons.local_bar, Color(0xFFAA96DA)),
+  'accommodation.hotel': const _CategoriaUI('Hotéis', Icons.hotel, Color(0xFF4ECDC4)),
+  'tourism.attraction': const _CategoriaUI('Atrações', Icons.attractions, Color(0xFFF38181)),
+  'entertainment.museum': const _CategoriaUI('Museus', Icons.museum, Color(0xFF95E1D3)),
+  'commercial.supermarket': const _CategoriaUI('Supermercados', Icons.shopping_cart, Color(0xFF74B9FF)),
+  'healthcare.pharmacy': const _CategoriaUI('Farmácias', Icons.local_pharmacy, Color(0xFFFD79A8)),
+  'natural.beach': const _CategoriaUI('Praias', Icons.beach_access, Color(0xFFFFD93D)),
+  'leisure.park': const _CategoriaUI('Parques', Icons.park, Color(0xFF55EFC4)),
+};
+
+final List<String> _categoriasDisponiveis = [
+  'catering.restaurant',
+  'catering.cafe',
+  'catering.bar',
+  'accommodation.hotel',
+  'tourism.attraction',
+  'entertainment.museum',
+  'commercial.supermarket',
+  'healthcare.pharmacy',
+  'natural.beach',
+  'leisure.park',
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════════════════════════════════
+
 class _PoiExplorerScreenState extends State<PoiExplorerScreen>
     with SingleTickerProviderStateMixin {
   
@@ -36,29 +71,15 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
   bool _loadingPois = false;
   String? _error;
 
-  int _radius = 1000;
-  int _limit = 20;
+  int _radius = 10000;
+  int _limit = 50;
 
-  final Set<String> _selectedCategories = {'catering.restaurant'};
+  final Set<String> _selectedCategories = {};
+  bool _soAbertos = false;
 
-  // ═══ NOVO: Estado para UI ═══════════════════════════════════════
-  PoiModel? _poiSelecionado;        // POI clicado no mapa
-  final Set<String> _favoritos = {}; // IDs dos favoritos
+  PoiModel? _poiSelecionado;
+  final Set<String> _favoritos = {};
   final MapController _mapController = MapController();
-
-  // ═══ CATEGORIAS (tua lista original) ════════════════════════════
-  final List<_PoiCategoryOption> _availableCategories = const [
-    _PoiCategoryOption(label: 'Restaurantes', category: 'catering.restaurant', icon: Icons.restaurant),
-    _PoiCategoryOption(label: 'Cafés', category: 'catering.cafe', icon: Icons.local_cafe),
-    _PoiCategoryOption(label: 'Bares', category: 'catering.bar', icon: Icons.local_bar),
-    _PoiCategoryOption(label: 'Hotéis', category: 'accommodation.hotel', icon: Icons.hotel),
-    _PoiCategoryOption(label: 'Atrações', category: 'tourism.attraction', icon: Icons.attractions),
-    _PoiCategoryOption(label: 'Museus', category: 'entertainment.museum', icon: Icons.museum),
-    _PoiCategoryOption(label: 'Supermercados', category: 'commercial.supermarket', icon: Icons.shopping_cart),
-    _PoiCategoryOption(label: 'Farmácias', category: 'healthcare.pharmacy', icon: Icons.local_pharmacy),
-    _PoiCategoryOption(label: 'Praias', category: 'natural.beach', icon: Icons.beach_access),
-    _PoiCategoryOption(label: 'Parques', category: 'leisure.park', icon: Icons.park),
-  ];
 
   @override
   void initState() {
@@ -75,7 +96,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // ═══ LÓGICA ORIGINAL (Geolocator + Geoapify) — NÃO MEXER ══════════
+  // LÓGICA (Geolocator + Geoapify)
   // ═══════════════════════════════════════════════════════════════════
 
   Future<void> _carregarDadosIniciais() async {
@@ -88,7 +109,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
         _loadingLocation = false;
       });
 
-      await _pesquisarPois();
+      // Não buscar POIs automaticamente
     } catch (e) {
       setState(() {
         _error = 'Erro ao carregar localização: $e';
@@ -99,10 +120,6 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
 
   Future<void> _pesquisarPois() async {
     if (_userLocation == null) return;
-    if (_selectedCategories.isEmpty) {
-      setState(() => _error = 'Selecciona pelo menos uma categoria.');
-      return;
-    }
 
     setState(() {
       _loadingPois = true;
@@ -110,10 +127,14 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
     });
 
     try {
+      final categoriasParaBuscar = _selectedCategories.isEmpty 
+          ? _categoriasDisponiveis 
+          : _selectedCategories.toList();
+
       final resultados = await _geoapifyService.buscarLocaisProximos(
         latitude: _userLocation!.latitude,
         longitude: _userLocation!.longitude,
-        categories: _selectedCategories.toList(),
+        categories: categoriasParaBuscar,
         radius: _radius,
         limit: _limit,
         incluirDetalhes: true,
@@ -123,6 +144,11 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
         _pois = resultados;
         _loadingPois = false;
       });
+
+      print('POIs fetched: ${resultados.length}');
+      for (var poi in resultados) {
+        print('  - ${poi.nome}: ${poi.categoriaPrincipal}');
+      }
     } catch (e) {
       setState(() {
         _error = 'Erro ao procurar locais: $e';
@@ -162,7 +188,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // ═══ NOVO: UI HELPERS ═════════════════════════════════════════════
+  // UI HELPERS
   // ═══════════════════════════════════════════════════════════════════
 
   String _formatarDistancia(double distancia) {
@@ -170,63 +196,74 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
     return '${(distancia / 1000).toStringAsFixed(1)} km';
   }
 
-  IconData _iconeParaPoi(PoiModel poi) {
-    final categoria = poi.categoriaPrincipal ?? '';
-    if (categoria.contains('restaurant')) return Icons.restaurant;
-    if (categoria.contains('cafe')) return Icons.local_cafe;
-    if (categoria.contains('bar')) return Icons.local_bar;
-    if (categoria.contains('hotel')) return Icons.hotel;
-    if (categoria.contains('museum')) return Icons.museum;
-    if (categoria.contains('pharmacy')) return Icons.local_pharmacy;
-    if (categoria.contains('supermarket')) return Icons.shopping_cart;
-    if (categoria.contains('beach')) return Icons.beach_access;
-    if (categoria.contains('park')) return Icons.park;
-    if (categoria.contains('tourism')) return Icons.attractions;
-    return Icons.place;
-  }
-
   void _navegarParaDetalhes(PoiModel poi) {
     Navigator.pushNamed(context, '/detail', arguments: poi);
   }
 
+  // NOVO helper para encontrar categoria:
+  _CategoriaUI _getCategoriaUI(PoiModel poi) {
+    final cat = poi.categoriaPrincipal?.toLowerCase() ?? '';
+    
+    // Mapeamento direto das categorias da API Geoapify
+    if (cat == 'tourism') return _categoriaUI['tourism.attraction']!;
+    if (cat == 'catering') return _categoriaUI['catering.restaurant']!;
+    if (cat == 'commercial') return _categoriaUI['commercial.supermarket']!;
+    if (cat == 'entertainment') return _categoriaUI['entertainment.museum']!;
+    if (cat == 'natural') return _categoriaUI['natural.beach']!;
+    if (cat == 'leisure') return _categoriaUI['leisure.park']!;
+    if (cat == 'accommodation') return _categoriaUI['accommodation.hotel']!;
+    if (cat == 'healthcare') return _categoriaUI['healthcare.pharmacy']!;
+    
+    // Fallback para substrings (para subcategorias como catering.restaurant)
+    if (cat.contains('restaurant')) return _categoriaUI['catering.restaurant']!;
+    if (cat.contains('cafe')) return _categoriaUI['catering.cafe']!;
+    if (cat.contains('bar')) return _categoriaUI['catering.bar']!;
+    if (cat.contains('hotel')) return _categoriaUI['accommodation.hotel']!;
+    if (cat.contains('attraction') || cat.contains('tourism')) return _categoriaUI['tourism.attraction']!;
+    if (cat.contains('museum')) return _categoriaUI['entertainment.museum']!;
+    if (cat.contains('supermarket') || cat.contains('commercial')) return _categoriaUI['commercial.supermarket']!;
+    if (cat.contains('pharmacy')) return _categoriaUI['healthcare.pharmacy']!;
+    if (cat.contains('beach')) return _categoriaUI['natural.beach']!;
+    if (cat.contains('park')) return _categoriaUI['leisure.park']!;
+    
+    // Fallback
+    return const _CategoriaUI('Local', Icons.place, AppColors.primary);
+  }
   // ═══════════════════════════════════════════════════════════════════
-  // ═══ BUILD — UI NOVO (Airbnb-style) ═══════════════════════════════
+  // BUILD PRINCIPAL
   // ═══════════════════════════════════════════════════════════════════
 
   @override
   Widget build(BuildContext context) {
-    // Loading inicial
     if (_loadingLocation) {
       return _buildLoadingState();
     }
 
-    // Erro de localização
     if (_userLocation == null && _error != null) {
       return _buildErroState();
     }
 
-    // UI principal: Stack com Mapa + Filtros + Lista + Card
     return Scaffold(
       body: Stack(
         children: [
-          // CAMADA 1: MAPA (fundo)
+          // CAMADA 1: MAPA
           _buildMapa(),
           
-          // CAMADA 2: FILTROS (topo, sobre o mapa)
+          // CAMADA 2: FILTROS + TOGGLE (topo)
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            child: _buildFiltros(),
+            child: _buildFiltrosComToggle(),
           ),
           
-          // CAMADA 3: LISTA FLUTUANTE (de baixo, arrastável)
+          // CAMADA 3: LISTA FLUTUANTE
           _buildListaFlutuante(),
           
-          // CAMADA 4: POI MARKER CARD (quando clica num pin)
+          // CAMADA 4: POI MARKER CARD
           if (_poiSelecionado != null)
             Positioned(
-              bottom: 100,
+              bottom: 120,
               left: 0,
               right: 0,
               child: _buildPoiMarkerCard(),
@@ -237,7 +274,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // ═══ LOADING STATE (bonito, estilo login) ════════════════════════
+  // LOADING STATE
   // ═══════════════════════════════════════════════════════════════════
 
   Widget _buildLoadingState() {
@@ -246,7 +283,6 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 🌊 Onda animada (igual login)
             Container(
               width: 80,
               height: 80,
@@ -290,7 +326,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // ═══ ERRO STATE (bonito, com retry) ═══════════════════════════════
+  // ERRO STATE
   // ═══════════════════════════════════════════════════════════════════
 
   Widget _buildErroState() {
@@ -330,33 +366,127 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // ═══ MAPA (com pins estilo login) ══════════════════════════════════
+  // MAPA + BOTÕES FLUTUANTES
   // ═══════════════════════════════════════════════════════════════════
 
   Widget _buildMapa() {
-    return FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(
-        initialCenter: _userLocation!,
-        initialZoom: 15,
-        onTap: (_, __) => setState(() => _poiSelecionado = null),
-      ),
+    return Stack(
       children: [
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.algarve.explorer',
+        FlutterMap(
+          mapController: _mapController,
+          options: MapOptions(
+            initialCenter: _userLocation!,
+            initialZoom: 15,
+            onTap: (_, __) => setState(() => _poiSelecionado = null),
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.algarve.explorer',
+            ),
+            MarkerLayer(
+              markers: _criarMarkers(),
+              
+            ),
+          ],
         ),
-        MarkerLayer(
-          markers: _criarMarkers(),
+        // BOTÃO FAVORITOS (canto inferior direito, acima)
+        Positioned(
+          right: 16,
+          bottom: 280,
+          child: _buildFavoritosButton(),
+        ),
+        // BOTÃO RECENTRAR (canto inferior direito, abaixo)
+        Positioned(
+          right: 16,
+          bottom: 220,
+          child: _buildRecentrarButton(),
         ),
       ],
+    );
+  }
+
+  Widget _buildFavoritosButton() {
+    final count = _favoritos.length;
+    return Material(
+      elevation: 4,
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: _mostrarFavoritos,
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              const Icon(Icons.favorite, color: Colors.red, size: 24),
+              if (count > 0)
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Container(
+                    width: 18,
+                    height: 18,
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$count',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecentrarButton() {
+    return Material(
+      elevation: 4,
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: () {
+          if (_userLocation != null) {
+            _mapController.move(_userLocation!, 15);
+          }
+        },
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.my_location,
+            color: AppColors.primary,
+            size: 24,
+          ),
+        ),
+      ),
     );
   }
 
   List<Marker> _criarMarkers() {
     final markers = <Marker>[];
 
-    // PIN da localização do user (azul)
+    // PIN do user
     if (_userLocation != null) {
       markers.add(
         Marker(
@@ -375,8 +505,11 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
       );
     }
 
-    // PINs dos POIs (gradiente azul, estilo login)
+    // PINs dos POIs (coloridos por categoria)
     for (final poi in _pois) {
+      final ui = _getCategoriaUI(poi);
+      final isFavorito = _favoritos.contains(poi.id);
+      
       markers.add(
         Marker(
           point: LatLng(poi.latitude, poi.longitude),
@@ -390,20 +523,18 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.primary, Color(0xFF4A90D9)],
-                    ),
+                    color: ui.cor,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary.withOpacity(0.4),
+                        color: ui.cor.withOpacity(0.4),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       ),
                     ],
                   ),
                   child: Icon(
-                    _iconeParaPoi(poi),
+                    isFavorito ? Icons.favorite : ui.icon,
                     color: Colors.white,
                     size: 20,
                   ),
@@ -412,7 +543,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                   width: 12,
                   height: 12,
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    color: ui.cor,
                     borderRadius: BorderRadius.circular(2),
                   ),
                   transform: Matrix4.rotationZ(0.785),
@@ -428,64 +559,94 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // ═══ FILTROS (chips estilo login) ════════════════════════════════
+  // FILTROS + TOGGLE "ABERTO AGORA"
   // ═══════════════════════════════════════════════════════════════════
 
-  Widget _buildFiltros() {
+  Widget _buildFiltrosComToggle() {
     return Container(
-      margin: const EdgeInsets.only(top: 8, left: 16, right: 16),
-      height: 60,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: _availableCategories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
-        itemBuilder: (context, index) {
-          final option = _availableCategories[index];
-          final isSelected = _selectedCategories.contains(option.category);
+      color: Colors.white.withOpacity(0.95),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // TOGGLE "Aberto agora"
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              children: [
+                Switch(
+                  value: _soAbertos,
+                  activeColor: AppColors.primary,
+                  onChanged: (value) {
+                    setState(() => _soAbertos = value);
+                  },
+                ),
+                const Text(
+                  'Só abertos agora',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          ),
+          // CATEGORIAS COLORIDAS
+          Container(
+            height: 60,
+            padding: const EdgeInsets.only(bottom: 8),
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: _categoriasDisponiveis.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final categoria = _categoriasDisponiveis[index];
+                final ui = _categoriaUI[categoria]!;
+                final isSelected = _selectedCategories.contains(categoria);
 
-          return FilterChip(
-            selected: isSelected,
-            showCheckmark: false,
-            avatar: Icon(
-              option.icon,
-              size: 18,
-              color: isSelected ? Colors.white : AppColors.textSecondary,
+                return FilterChip(
+                  selected: isSelected,
+                  showCheckmark: false,
+                  avatar: Icon(
+                    ui.icon,
+                    size: 18,
+                    color: isSelected ? Colors.white : ui.cor,
+                  ),
+                  label: Text(
+                    ui.label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      color: isSelected ? Colors.white : ui.cor,
+                    ),
+                  ),
+                  selectedColor: ui.cor,
+                  backgroundColor: ui.cor.withOpacity(0.1),
+                  side: BorderSide(
+                    color: isSelected ? ui.cor : ui.cor.withOpacity(0.3),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  onSelected: (_) {
+                    _alternarCategoria(categoria);
+                    _pesquisarPois();
+                  },
+                );
+              },
             ),
-            label: Text(
-              option.label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? Colors.white : AppColors.textSecondary,
-              ),
-            ),
-            selectedColor: AppColors.primary,
-            backgroundColor: const Color(0xFFF1F5F9),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: BorderSide(
-                color: isSelected ? AppColors.primary : const Color(0xFFE2E8F0),
-              ),
-            ),
-            onSelected: (_) {
-              _alternarCategoria(option.category);
-              _pesquisarPois(); // Recarrega com novo filtro
-            },
-          );
-        },
+          ),
+        ],
       ),
     );
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // ═══ LISTA FLUTUANTE (DraggableScrollableSheet — Airbnb) ════════
+  // LISTA FLUTUANTE
   // ═══════════════════════════════════════════════════════════════════
 
   Widget _buildListaFlutuante() {
     return DraggableScrollableSheet(
-      initialChildSize: 0.25,  // Começa a 25%
-      minChildSize: 0.12,       // Mínimo: só handle
-      maxChildSize: 0.85,       // Máximo: quase fullscreen
+      initialChildSize: 0.30,
+      minChildSize: 0.15,
+      maxChildSize: 0.80,
       builder: (context, scrollController) {
         return Container(
           decoration: BoxDecoration(
@@ -501,7 +662,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
           ),
           child: Column(
             children: [
-              // Handle de arrastar
+              // Handle
               Container(
                 margin: const EdgeInsets.only(top: 12, bottom: 8),
                 width: 40,
@@ -511,15 +672,14 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              
-              // Header: "N locais encontrados"
+              // Header
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '${_pois.length} locais encontrados',
+                      '${_pois.length} locais',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -537,13 +697,13 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                   ],
                 ),
               ),
-              
-              // Lista de POIs
+              // Lista
               Expanded(
                 child: _pois.isEmpty
                     ? _buildListaVazia()
                     : ListView.builder(
                         controller: scrollController,
+                        physics: const BouncingScrollPhysics(),
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         itemCount: _pois.length,
                         itemBuilder: (context, index) {
@@ -578,39 +738,39 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
     );
   }
 
-  // Card da lista (simplificado, estilo login)
   Widget _buildPoiListCard(PoiModel poi) {
+    final ui = _getCategoriaUI(poi);
+    final isFavorito = _favoritos.contains(poi.id);
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: InkWell(
         onTap: () => _navegarParaDetalhes(poi),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Ícone gradiente
               Container(
-                width: 48,
-                height: 48,
+                width: 46,
+                height: 46,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.primary, Color(0xFF4A90D9)],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
+                  color: ui.cor,
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(
-                  _iconeParaPoi(poi),
-                  color: Colors.white,
-                  size: 24,
+                child: Center(
+                  child: Icon(
+                    isFavorito ? Icons.favorite : ui.icon,
+                    color: Colors.white,
+                    size: 22,
+                  ),
                 ),
               ),
-              const SizedBox(width: 16),
-              
-              // Info
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -619,21 +779,45 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                       poi.nome,
                       style: const TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
-                    if (poi.categoriaPrincipal != null)
-                      Text(
-                        poi.categoriaPrincipal!,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
+                    const SizedBox(height: 6),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: ui.cor.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Text(
+                            ui.label,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: ui.cor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
-                      ),
-                    const SizedBox(height: 4),
+                        const SizedBox(width: 8),
+                        if (poi.categoriaPrincipal != null)
+                          Text(
+                            poi.categoriaPrincipal!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
                     Row(
                       children: [
                         if (poi.distancia != null) ...[
@@ -650,7 +834,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                         ],
                         if (poi.avaliacao != null) ...[
                           const SizedBox(width: 12),
-                          Icon(Icons.star, size: 14, color: Colors.amber),
+                          const Icon(Icons.star, size: 14, color: Colors.amber),
                           const SizedBox(width: 4),
                           Text(
                             '${poi.avaliacao}',
@@ -662,8 +846,6 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                   ],
                 ),
               ),
-              
-              // Seta
               Icon(Icons.chevron_right, color: Colors.grey[400]),
             ],
           ),
@@ -673,13 +855,18 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // ═══ POI MARKER CARD (quando clica num pin) ═══════════════════════
+  // POI MARKER CARD
   // ═══════════════════════════════════════════════════════════════════
 
   Widget _buildPoiMarkerCard() {
     return PoiMarkerCard(
       poi: _poiSelecionado!,
       isFavorito: _favoritos.contains(_poiSelecionado!.id),
+      onFechar: () {
+        if (mounted) {
+          setState(() => _poiSelecionado = null);
+        }
+      },
       onVerDetalhes: () {
         final poi = _poiSelecionado!;
         setState(() => _poiSelecionado = null);
@@ -699,7 +886,93 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // ═══ BOTÃO GRADIENTE (helper, estilo login) ════════════════════════
+  // FAVORITOS (BottomSheet)
+  // ═══════════════════════════════════════════════════════════════════
+
+  void _mostrarFavoritos() {
+    final favoritosPois = _pois.where((p) => _favoritos.contains(p.id)).toList();
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.3,
+          maxChildSize: 0.9,
+          builder: (_, controller) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.favorite, color: Colors.red),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Meus Favoritos (${favoritosPois.length})',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: favoritosPois.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.favorite_border, size: 64, color: Colors.grey[300]),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Ainda não guardaste nenhum local',
+                                style: TextStyle(color: Colors.grey[500]),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          controller: controller,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: favoritosPois.length,
+                          itemBuilder: (context, index) {
+                            final poi = favoritosPois[index];
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _buildPoiListCard(poi),
+                            );
+                          },
+                        ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // BOTÃO GRADIENTE (helper)
   // ═══════════════════════════════════════════════════════════════════
 
   Widget _buildGradientButton({
@@ -751,20 +1024,4 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
       ),
     );
   }
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// ═══ CLASSE AUXILIAR (tua original) ════════════════════════════════
-// ═══════════════════════════════════════════════════════════════════
-
-class _PoiCategoryOption {
-  final String label;
-  final String category;
-  final IconData icon;
-
-  const _PoiCategoryOption({
-    required this.label,
-    required this.category,
-    required this.icon,
-  });
 }

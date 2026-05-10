@@ -55,7 +55,7 @@ class PoiCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      (poi.nome ?? ' '),
+                      poi.nome,
                       style: Theme.of(context).textTheme.titleMedium,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -125,15 +125,25 @@ class PoiCard extends StatelessWidget {
   }
 
   IconData _iconeCategoria(String categoria) {
-    switch (categoria.toLowerCase()) {
-      case 'praia':
-        return Icons.beach_access;
-      case 'restaurante':
-        return Icons.restaurant;
-      case 'monumento':
-        return Icons.account_balance;
-      default:
-        return Icons.place;
-    }
+    final cat = categoria.toLowerCase();
+    if (cat == 'tourism') return Icons.attractions;
+    if (cat == 'catering') return Icons.restaurant;
+    if (cat == 'commercial') return Icons.shopping_cart;
+    if (cat == 'entertainment') return Icons.museum;
+    if (cat == 'natural') return Icons.beach_access;
+    if (cat == 'leisure') return Icons.park;
+    if (cat == 'accommodation') return Icons.hotel;
+    if (cat == 'healthcare') return Icons.local_pharmacy;
+    if (cat.contains('restaurant')) return Icons.restaurant;
+    if (cat.contains('cafe')) return Icons.local_cafe;
+    if (cat.contains('bar')) return Icons.local_bar;
+    if (cat.contains('hotel')) return Icons.hotel;
+    if (cat.contains('attraction') || cat.contains('tourism')) return Icons.attractions;
+    if (cat.contains('museum')) return Icons.museum;
+    if (cat.contains('pharmacy')) return Icons.local_pharmacy;
+    if (cat.contains('supermarket') || cat.contains('commercial')) return Icons.shopping_cart;
+    if (cat.contains('beach')) return Icons.beach_access;
+    if (cat.contains('park')) return Icons.park;
+    return Icons.place;
   }
 }

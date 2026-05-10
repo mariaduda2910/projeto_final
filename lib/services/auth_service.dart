@@ -1,12 +1,10 @@
 ﻿// Service: login, logout, validação de sessão
 import '../models/user_model.dart';
 import '../models/session_model.dart';
-import 'geoapify_service.dart';
 import 'storage_service.dart';
 
 /// Service responsável por toda a lógica de autenticação.
 class AuthService {
-  final GeoapifyService _api = GeoapifyService();
   final StorageService _storage = StorageService();
 
   /// Faz login e retorna o utilizador se for válido.
