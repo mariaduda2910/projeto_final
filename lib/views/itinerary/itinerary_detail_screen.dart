@@ -265,28 +265,63 @@ class _ItineraryDetailScreenState extends State<ItineraryDetailScreen>
           ),
         ),
 
-        // Botão "Navegar rota completa"
+        // Botões "Ver no Mapa" + "Navegar"
         if (points.isNotEmpty)
           Positioned(
             bottom: 16,
             left: 16,
             right: 16,
-            child: ElevatedButton.icon(
-              onPressed: () => _navegarRotaCompleta(points),
-              icon: const Icon(Icons.navigation),
-              label: const Text('Navegar Rota Completa'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+            child: Column(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _verNoMapaInterno(),
+                    icon: const Icon(Icons.map),
+                    label: const Text('Ver no Mapa (traçar rota)'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _navegarRotaCompleta(points),
+                    icon: const Icon(Icons.navigation),
+                    label: const Text('Abrir no Google Maps'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: const BorderSide(color: AppColors.primary),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
       ],
     );
+  }
+
+  /// Marca este roteiro como ativo no mapa interno e volta ao /shell.
+  Future<void> _verNoMapaInterno() async {
+    final provider = context.read<ItineraryProvider>();
+    await provider.definirRoteiroAtivo(widget.roteiro.id);
+
+    if (!mounted) return;
+    // Volta para o /shell — o mapa já vai mostrar a polyline da rota
+    Navigator.popUntil(context, (route) => route.isFirst || route.settings.name == '/shell');
+    Navigator.pushReplacementNamed(context, '/shell');
   }
 
   Widget _buildLegendaItem(Color cor, String label) {

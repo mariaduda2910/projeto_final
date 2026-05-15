@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../models/poi_model.dart';
+import '../../providers/favorites_provider.dart';
 import '../../providers/itinerary_provider.dart';
 import '../../services/geoapify_service.dart';
 import '../../widgets/itinerary/active_itinerary_picker.dart';
@@ -92,8 +93,13 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
   bool _soAbertos = false;
 
   PoiModel? _poiSelecionado;
-  final Set<String> _favoritos = {};
   final MapController _mapController = MapController();
+
+  // Acesso ao FavoritesProvider sem ouvir mudanças (refresh é via Consumer)
+  FavoritesProvider get _favProvider => context.read<FavoritesProvider>();
+  bool _isFavorito(PoiModel poi) =>
+      _favProvider.isFavorito(poi.id ?? poi.placeId);
+  Future<void> _toggleFavorito(PoiModel poi) => _favProvider.toggle(poi);
 
   // Modo de seleção múltipla para criar/adicionar a roteiros
   bool _modoSelecao = false;
@@ -640,8 +646,8 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
   // ═══════════════════════════════════════════════════════════════════
 
   Widget _buildMapa() {
-    return Consumer<ItineraryProvider>(
-      builder: (context, itineraryProvider, _) {
+    return Consumer2<ItineraryProvider, FavoritesProvider>(
+      builder: (context, itineraryProvider, _, __) {
         final ativo = itineraryProvider.roteiroAtivo;
         final rota = itineraryProvider.rotaCalculada;
 
@@ -771,7 +777,12 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
   }
 
   Widget _buildFavoritosButton() {
-    final count = _favoritos.length;
+    return Consumer<FavoritesProvider>(
+      builder: (context, fav, _) => _buildFavoritosButtonContent(fav.count),
+    );
+  }
+
+  Widget _buildFavoritosButtonContent(int count) {
     return Material(
       elevation: 4,
       shape: const CircleBorder(),
@@ -872,7 +883,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
     // PINs dos POIs (coloridos por categoria)
     for (final poi in _pois) {
       final ui = _getCategoriaUI(poi);
-      final isFavorito = _favoritos.contains(poi.id);
+      final isFavorito = _isFavorito(poi);
       final isSelecionadoParaRoteiro =
           _poisSelecionadosParaRoteiro.contains(_poiId(poi));
 
@@ -1127,7 +1138,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
 
   Widget _buildPoiListCard(PoiModel poi) {
     final ui = _getCategoriaUI(poi);
-    final isFavorito = _favoritos.contains(poi.id);
+    final isFavorito = _isFavorito(poi);
 
     // Lógica para destacar POIs sem horário quando filtro "só abertos" está ativo
     final deveDestacarVermelho = _soAbertos && !_estaAberto(poi);
@@ -1286,30 +1297,21 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
   // ═══════════════════════════════════════════════════════════════════
 
   Widget _buildPoiMarkerCard() {
-    return PoiMarkerCard(
-      poi: _poiSelecionado!,
-      isFavorito: _favoritos.contains(_poiSelecionado!.id),
-      deveDestacarVermelho: _soAbertos && !_estaAberto(_poiSelecionado!),
-      onFechar: () {
-        if (mounted) {
+    final poi = _poiSelecionado!;
+    return Consumer<FavoritesProvider>(
+      builder: (context, fav, _) => PoiMarkerCard(
+        poi: poi,
+        isFavorito: fav.isFavorito(poi.id ?? poi.placeId),
+        deveDestacarVermelho: _soAbertos && !_estaAberto(poi),
+        onFechar: () {
+          if (mounted) setState(() => _poiSelecionado = null);
+        },
+        onVerDetalhes: () {
           setState(() => _poiSelecionado = null);
-        }
-      },
-      onVerDetalhes: () {
-        final poi = _poiSelecionado!;
-        setState(() => _poiSelecionado = null);
-        _navegarParaDetalhes(poi);
-      },
-      onToggleFavorito: () {
-        setState(() {
-          final id = _poiSelecionado!.id!;
-          if (_favoritos.contains(id)) {
-            _favoritos.remove(id);
-          } else {
-            _favoritos.add(id);
-          }
-        });
-      },
+          _navegarParaDetalhes(poi);
+        },
+        onToggleFavorito: () => _toggleFavorito(poi),
+      ),
     );
   }
 
@@ -1318,9 +1320,6 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
   // ═══════════════════════════════════════════════════════════════════
 
   void _mostrarFavoritos() {
-    final favoritosPois =
-        _pois.where((p) => _favoritos.contains(p.id)).toList();
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1331,73 +1330,112 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
           minChildSize: 0.3,
           maxChildSize: 0.9,
           builder: (_, controller) {
-            return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(top: 12),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+            return Consumer<FavoritesProvider>(
+              builder: (context, favProvider, _) {
+                final favoritos = favProvider.favoritos;
+                return Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(24)),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.favorite, color: Colors.red),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Meus Favoritos (${favoritosPois.length})',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                  child: Column(
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(top: 12),
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(2),
                         ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: favoritosPois.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.favorite_border,
-                                    size: 64, color: Colors.grey[300]),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Ainda não guardaste nenhum local',
-                                  style: TextStyle(color: Colors.grey[500]),
-                                ),
-                              ],
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.favorite, color: Colors.red),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Meus Favoritos (${favoritos.length})',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          )
-                        : ListView.builder(
-                            controller: controller,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: favoritosPois.length,
-                            itemBuilder: (context, index) {
-                              final poi = favoritosPois[index];
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: _buildPoiListCard(poi),
-                              );
-                            },
-                          ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: favoritos.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.favorite_border,
+                                        size: 64, color: Colors.grey[300]),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'Ainda não guardaste nenhum local',
+                                      style:
+                                          TextStyle(color: Colors.grey[500]),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : ListView.builder(
+                                controller: controller,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16),
+                                itemCount: favoritos.length,
+                                itemBuilder: (context, index) {
+                                  final fav = favoritos[index];
+                                  return _buildFavoritoListItem(
+                                      fav, favProvider);
+                                },
+                              ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             );
           },
         );
       },
+    );
+  }
+
+  Widget _buildFavoritoListItem(fav, FavoritesProvider provider) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: const CircleAvatar(
+          backgroundColor: Colors.red,
+          child: Icon(Icons.favorite, color: Colors.white),
+        ),
+        title: Text(
+          fav.nome,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Text(
+          fav.endereco ?? fav.categoria ?? '',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: IconButton(
+          icon: const Icon(Icons.favorite, color: Colors.red),
+          onPressed: () => provider.remover(fav.id),
+          tooltip: 'Remover dos favoritos',
+        ),
+        onTap: () {
+          Navigator.pop(context);
+          // Centra o mapa no favorito
+          _mapController.move(LatLng(fav.latitude, fav.longitude), 16);
+        },
+      ),
     );
   }
 

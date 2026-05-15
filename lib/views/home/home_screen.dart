@@ -6,7 +6,9 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/utils/helpers.dart';
+import '../../models/favorite_poi_model.dart';
 import '../../models/itinerary_model.dart';
+import '../../providers/favorites_provider.dart';
 import '../../providers/itinerary_provider.dart';
 import '../itinerary/itinerary_list_screen.dart';
 import '../itinerary/itinerary_detail_screen.dart';
@@ -370,41 +372,149 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildFavoritosRapidos(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Consumer<FavoritesProvider>(
+      builder: (context, favProvider, _) {
+        final favoritos = favProvider.favoritos;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Favoritos Recentes',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Favoritos Recentes',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+                if (favoritos.isNotEmpty)
+                  TextButton(
+                    onPressed: () => _mostrarTodosFavoritos(context, favProvider),
+                    child: const Text('Ver todos'),
+                  ),
+              ],
             ),
-            TextButton(
-              onPressed: () {},
-              child: const Text('Ver todos'),
-            ),
+            const SizedBox(height: 12),
+            if (favoritos.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  children: [
+                    Icon(Icons.favorite_border,
+                        color: Colors.grey[400], size: 36),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Ainda não tens favoritos',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Toca no ♥ de um local no mapa para guardar',
+                      style: TextStyle(
+                          fontSize: 12, color: Colors.grey[500]),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              )
+            else
+              SizedBox(
+                height: 120,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: favoritos.length,
+                  itemBuilder: (_, i) => _buildFavoritoCard(favoritos[i]),
+                ),
+              ),
           ],
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 120,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              _buildFavoritoCard(
-                'Praia da Marinha', Icons.beach_access, Colors.amber),
-              _buildFavoritoCard('O Leão', Icons.restaurant, Colors.red),
-              _buildFavoritoCard(
-                'Castelo Silves', Icons.account_balance, Colors.teal),
-            ],
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 
-  Widget _buildFavoritoCard(String nome, IconData icon, Color cor) {
+  void _mostrarTodosFavoritos(BuildContext context, FavoritesProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (_, controller) => Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Row(
+                children: [
+                  const Icon(Icons.favorite, color: Colors.red),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Todos os Favoritos (${provider.favoritos.length})',
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: ListView.separated(
+                  controller: controller,
+                  itemCount: provider.favoritos.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 4),
+                  itemBuilder: (_, i) {
+                    final fav = provider.favoritos[i];
+                    return Card(
+                      margin: EdgeInsets.zero,
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: _corCategoria(fav.categoria),
+                          child: Icon(_iconeCategoria(fav.categoria),
+                              color: Colors.white),
+                        ),
+                        title: Text(fav.nome,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
+                        subtitle: Text(
+                          fav.endereco ?? fav.categoria ?? '',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.favorite, color: Colors.red),
+                          onPressed: () => provider.remover(fav.id),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFavoritoCard(FavoritePoi fav) {
+    final cor = _corCategoria(fav.categoria);
+    final icon = _iconeCategoria(fav.categoria);
+
     return Container(
       width: 100,
       margin: const EdgeInsets.only(right: 12),
@@ -421,7 +531,7 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            nome,
+            fav.nome,
             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
             textAlign: TextAlign.center,
             maxLines: 2,
@@ -430,6 +540,33 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Color _corCategoria(String? cat) {
+    if (cat == null) return AppColors.primary;
+    if (cat.contains('beach')) return Colors.amber;
+    if (cat.contains('restaurant') || cat.contains('catering')) return Colors.red;
+    if (cat.contains('hotel') || cat.contains('accommodation')) return Colors.teal;
+    if (cat.contains('museum') || cat.contains('attraction')) return Colors.purple;
+    if (cat.contains('park') || cat.contains('leisure')) return Colors.green;
+    if (cat.contains('pharmacy')) return Colors.pink;
+    if (cat.contains('supermarket') || cat.contains('commercial')) return Colors.blue;
+    return AppColors.primary;
+  }
+
+  IconData _iconeCategoria(String? cat) {
+    if (cat == null) return Icons.place;
+    if (cat.contains('beach')) return Icons.beach_access;
+    if (cat.contains('restaurant')) return Icons.restaurant;
+    if (cat.contains('cafe')) return Icons.local_cafe;
+    if (cat.contains('bar')) return Icons.local_bar;
+    if (cat.contains('hotel') || cat.contains('accommodation')) return Icons.hotel;
+    if (cat.contains('museum')) return Icons.museum;
+    if (cat.contains('attraction')) return Icons.attractions;
+    if (cat.contains('park')) return Icons.park;
+    if (cat.contains('pharmacy')) return Icons.local_pharmacy;
+    if (cat.contains('supermarket')) return Icons.shopping_cart;
+    return Icons.place;
   }
 
   Widget _buildMerchandising(BuildContext context) {

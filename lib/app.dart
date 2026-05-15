@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'models/user_model.dart';
 import 'providers/auth_provider.dart';
+import 'providers/favorites_provider.dart';
 import 'providers/itinerary_provider.dart';
 import 'providers/location_provider.dart';
 import 'providers/poi_provider.dart';
@@ -26,6 +27,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LocationProvider()),
         ChangeNotifierProvider(create: (_) => PoiProvider()),
         ChangeNotifierProvider(create: (_) => ItineraryProvider()),
+        ChangeNotifierProvider(create: (_) => FavoritesProvider()),
       ],
       child: MaterialApp(
         title: 'Algarve Explorer',

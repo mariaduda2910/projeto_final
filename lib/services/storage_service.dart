@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_constants.dart';
+import '../models/favorite_poi_model.dart';
 import '../models/itinerary_model.dart';
 import '../models/session_model.dart';
 import '../models/user_model.dart';
@@ -20,6 +21,7 @@ class StorageService {
   static const String _keyCredenciais = 'USER_CREDENTIALS';
   static const String _keyRoteiros = 'USER_ITINERARIES';
   static const String _keyRoteiroAtivo = 'ACTIVE_ITINERARY_ID';
+  static const String _keyFavoritos = 'USER_FAVORITES';
 
   /// Inicializa o service. Chamar no main.dart antes de correr a app.
   Future<void> init() async {
@@ -125,6 +127,22 @@ class StorageService {
   }
 
   String? obterRoteiroAtivoId() => _prefs?.getString(_keyRoteiroAtivo);
+
+  // ─── Favoritos ──────────────────────────────────────────────────────────────
+
+  Future<void> guardarFavoritos(List<FavoritePoi> favoritos) async {
+    final lista = favoritos.map((f) => f.toJson()).toList();
+    await _prefs?.setString(_keyFavoritos, jsonEncode(lista));
+  }
+
+  List<FavoritePoi> obterFavoritos() {
+    final dados = _prefs?.getString(_keyFavoritos);
+    if (dados == null) return [];
+    final lista = jsonDecode(dados) as List;
+    return lista
+        .map((f) => FavoritePoi.fromJson(Map<String, dynamic>.from(f)))
+        .toList();
+  }
 
   // ─── Localização ────────────────────────────────────────────────────────────
 
