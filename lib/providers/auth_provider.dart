@@ -12,6 +12,10 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
+  /// [utilizadorInicial] é passado pelo main.dart quando há sessão válida,
+  /// evitando um ecrã de splash extra.
+  AuthProvider({UserModel? utilizadorInicial}) : _user = utilizadorInicial;
+
   UserModel? get user => _user;
   bool get isLoading => _isLoading;
   String? get error => _error;

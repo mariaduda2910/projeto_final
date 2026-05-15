@@ -1,16 +1,16 @@
-﻿// Ponto de entrada da aplicação
 import 'package:flutter/material.dart';
 import 'app.dart';
+import 'models/user_model.dart';
+import 'services/auth_service.dart';
 import 'services/storage_service.dart';
 
-/// Função principal que arranca a aplicação.
 void main() async {
-  // Garante que o Flutter está inicializado
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Inicializa serviços globais antes de correr a app
   await StorageService().init();
-  
-  // Corre a aplicação
-  runApp(const MyApp());
+
+  // Restaura sessão antes de arrancar a app.
+  // Se houver sessão válida, o utilizador vai direto para /home.
+  final UserModel? utilizadorRestaurado = await AuthService().restaurarSessao();
+
+  runApp(MyApp(utilizadorInicial: utilizadorRestaurado));
 }
