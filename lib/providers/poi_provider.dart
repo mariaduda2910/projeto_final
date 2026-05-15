@@ -1,20 +1,31 @@
 ﻿// Provider: estado dos pontos turísticos
 import 'package:flutter/material.dart';
 import '../models/poi_model.dart';
+import '../models/route_model.dart';
+import '../services/route_service.dart';
 import '../core/utils/helpers.dart';
 
-/// Provider que gere a lista de pontos turísticos.
+/// Provider que gere a lista de pontos turísticos e a rota calculada.
 class PoiProvider extends ChangeNotifier {
+  final RouteService _routeService = RouteService();
+
   List<PoiModel> _pois = [];
   List<PoiModel> _poisFiltrados = [];
   bool _aCarregar = false;
   final List<String> _poisSelecionados = []; // IDs dos POIs na rota
+  RouteModel? _rotaCalculada;
 
   List<PoiModel> get pois => _poisFiltrados;
   bool get aCarregar => _aCarregar;
-  List<PoiModel> get rota => _pois
+  RouteModel? get rotaCalculada => _rotaCalculada;
+
+  /// POIs selecionados na ordem original de seleção (sem otimização).
+  List<PoiModel> get poisSelecionados => _pois
       .where((p) => _poisSelecionados.contains(p.id))
       .toList();
+
+  /// Atalho: percurso já otimizado ou, se ainda não calculado, lista vazia.
+  List<PoiModel> get rota => _rotaCalculada?.percurso ?? [];
 
   /// Carrega pontos turísticos (mock por enquanto).
   Future<void> carregarPois() async {
@@ -83,18 +94,48 @@ class PoiProvider extends ChangeNotifier {
   }
 
   /// Adiciona/remove um POI da rota do turista.
+  /// Limpa a rota calculada anteriormente — o utilizador deve recalcular.
   void toggleSelecaoRota(String poiId) {
     if (_poisSelecionados.contains(poiId)) {
       _poisSelecionados.remove(poiId);
     } else {
       _poisSelecionados.add(poiId);
     }
+    _rotaCalculada = null; // rota desatualizada após mudança de seleção
     notifyListeners();
   }
 
-  /// Ordena a rota selecionada por proximidade (TSP simplificado).
-  void ordenarRotaPorProximidade(double lat, double lng) {
-    // Implementação futura: algoritmo do vizinho mais próximo
+  /// Calcula a rota otimizada entre os POIs selecionados.
+  ///
+  /// Usa o algoritmo Nearest Neighbor a partir da posição [lat]/[lng].
+  /// Depois de chamar este método, [rotaCalculada] fica disponível.
+  void calcularRota(double lat, double lng) {
+    final selecionados = poisSelecionados;
+    if (selecionados.isEmpty) {
+      _rotaCalculada = null;
+      notifyListeners();
+      return;
+    }
+
+    _rotaCalculada = _routeService.calcularRota(
+      pois: selecionados,
+      latAtual: lat,
+      lngAtual: lng,
+    );
     notifyListeners();
   }
+
+  /// Remove todos os POIs da seleção e limpa a rota.
+  void limparRota() {
+    _poisSelecionados.clear();
+    _rotaCalculada = null;
+    notifyListeners();
+  }
+
+  /// Indica se um POI está atualmente selecionado para a rota.
+  bool estaSelecionado(String poiId) => _poisSelecionados.contains(poiId);
+
+  /// Compatibilidade com chamadas anteriores — delega para [calcularRota].
+  void ordenarRotaPorProximidade(double lat, double lng) =>
+      calcularRota(lat, lng);
 }

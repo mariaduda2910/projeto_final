@@ -27,4 +27,14 @@ class UserModel {
       isAtivo: json['is_ativo'] ?? true,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'email': email,
+      'nome': nome,
+      'data_ativacao': dataAtivacao.toIso8601String(),
+      'data_expiracao': dataExpiracao.toIso8601String(),
+      'is_ativo': isAtivo,
+    };
+  }
 }

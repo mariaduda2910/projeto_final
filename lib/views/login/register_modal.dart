@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
+import '../../providers/auth_provider.dart';
 
 /// Modal de Registro - "Criar Conta"
 /// Design Figma: Junte-se à comunidade Algarve Explorer
@@ -89,17 +91,28 @@ class _RegisterModalState extends State<RegisterModal>
     return null;
   }
 
-  /// Função para criar conta (a implementar com API)
-  void _handleCreateAccount() {
-    if (_formKey.currentState?.validate() ?? false) {
-      // TODO: Implementar chamada à API de registro
+  /// Cria conta via AuthProvider e faz login automático.
+  Future<void> _handleCreateAccount() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    final auth = context.read<AuthProvider>();
+    final sucesso = await auth.registar(
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
+
+    if (!mounted) return;
+
+    if (sucesso) {
+      Navigator.pop(context); // fecha o modal
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Conta criada com sucesso!'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(auth.error ?? 'Erro ao criar conta.'),
+          backgroundColor: AppColors.error,
         ),
       );
-      Navigator.pop(context);
     }
   }
 
@@ -315,7 +328,7 @@ class _RegisterModalState extends State<RegisterModal>
                         height: 56,
                         child: _buildGradientButton(
                           text: 'Criar Conta',
-                          onPressed: _handleCreateAccount,
+                          onPressed: () => _handleCreateAccount(),
                         ),
                       ),
 

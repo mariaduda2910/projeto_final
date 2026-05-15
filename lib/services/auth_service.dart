@@ -1,60 +1,100 @@
-﻿// Service: login, logout, validação de sessão
-import '../models/user_model.dart';
+// Service: login, logout, registo e validação de sessão
 import '../models/session_model.dart';
-import 'api_service.dart';
+import '../models/user_model.dart';
 import 'storage_service.dart';
 
-/// Service responsável por toda a lógica de autenticação.
+/// Service responsável por toda a lógica de autenticação local.
 class AuthService {
-  final ApiService _api = ApiService();
   final StorageService _storage = StorageService();
 
-  /// Faz login e retorna o utilizador se for válido.
-  /// Se a API não existir ainda, podes simular aqui!
+  // ─── Login ─────────────────────────────────────────────────────────────────
+
+  /// Verifica as credenciais e abre sessão se válidas.
+  /// Retorna o [UserModel] em caso de sucesso, null caso contrário.
   Future<UserModel?> login(String email, String password) async {
     try {
-      // SIMULAÇÃO: enquanto não tens API, retorna dados mockados
-      await Future.delayed(const Duration(seconds: 1)); // simula rede
-      
-      if (email.isNotEmpty && password.length >= 4) {
-        final user = UserModel(
-          email: email,
-          nome: 'Turista',
-          dataAtivacao: DateTime.now(),
-          dataExpiracao: DateTime.now().add(const Duration(days: 7)),
-        );
-        
-        final session = SessionModel(
-          token: 'fake_token_${DateTime.now().millisecondsSinceEpoch}',
-          email: email,
-          expiryDate: user.dataExpiracao,
-        );
-        
-        await _storage.guardarSessao(session);
-        return user;
-      }
-      return null;
-      
-      // QUANDO TIVERES API, descomenta isto:
-      // final response = await _api.post(
-      //   AppConstants.loginEndpoint,
-      //   data: {'email': email, 'password': password},
-      // );
-      // return UserModel.fromJson(response.data);
-      
-    } catch (e) {
+      final dados = _storage.verificarCredencial(email, password);
+      if (dados == null) return null;
+
+      final user = UserModel(
+        email: dados['email'],
+        nome: dados['nome'],
+        dataAtivacao: DateTime.parse(dados['data_ativacao']),
+        dataExpiracao: DateTime.parse(dados['data_expiracao']),
+      );
+
+      if (!user.isValido) return null; // conta expirada
+
+      final session = SessionModel(
+        token: 'local_${email}_${DateTime.now().millisecondsSinceEpoch}',
+        email: email,
+        expiryDate: user.dataExpiracao,
+      );
+
+      await _storage.guardarSessao(session);
+      await _storage.guardarUser(user);
+      return user;
+    } catch (_) {
       return null;
     }
   }
 
-  /// Verifica se existe uma sessão válida guardada.
+  // ─── Registo ───────────────────────────────────────────────────────────────
+
+  /// Regista um novo utilizador localmente.
+  ///
+  /// Retorna o [UserModel] criado em caso de sucesso.
+  /// Lança [AuthException] se o email já estiver registado.
+  Future<UserModel> registar(String email, String password) async {
+    final registado = await _storage.registarCredencial(
+      email,
+      password,
+      _nomeAPartirDeEmail(email),
+    );
+
+    if (!registado) throw AuthException('Este email já está registado.');
+
+    // Após registo faz login automático
+    final user = await login(email, password);
+    if (user == null) throw AuthException('Erro ao criar sessão após registo.');
+    return user;
+  }
+
+  // ─── Sessão ────────────────────────────────────────────────────────────────
+
+  /// Verifica se existe uma sessão válida guardada localmente.
   Future<bool> temSessaoValida() async {
     final session = _storage.obterSessao();
     return session != null && !session.isExpired;
   }
 
-  /// Faz logout limpando os dados locais.
-  Future<void> logout() async {
-    await _storage.limparTudo();
+  /// Restaura o utilizador a partir do storage local (auto-login).
+  /// Retorna null se não houver sessão válida ou utilizador guardado.
+  Future<UserModel?> restaurarSessao() async {
+    final temSessao = await temSessaoValida();
+    if (!temSessao) return null;
+    return _storage.obterUser();
   }
+
+  /// Termina a sessão — remove sessão e utilizador, mas preserva credenciais.
+  Future<void> logout() async {
+    await _storage.limparSessao();
+  }
+
+  // ─── Helpers ───────────────────────────────────────────────────────────────
+
+  /// Extrai um nome a partir do email (parte antes do @).
+  String _nomeAPartirDeEmail(String email) {
+    final parte = email.split('@').first;
+    return parte[0].toUpperCase() + parte.substring(1);
+  }
+}
+
+/// Exceção específica de autenticação com mensagem legível pelo utilizador.
+class AuthException implements Exception {
+  final String message;
+  const AuthException(this.message);
+
+  @override
+  String toString() => message;
 }
