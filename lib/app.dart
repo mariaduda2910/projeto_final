@@ -3,9 +3,11 @@ import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'models/user_model.dart';
 import 'providers/auth_provider.dart';
+import 'providers/itinerary_provider.dart';
 import 'providers/location_provider.dart';
 import 'providers/poi_provider.dart';
 import 'routes.dart';
+import 'widgets/shell_layout.dart';
 
 class MyApp extends StatelessWidget {
   final UserModel? utilizadorInicial;
@@ -14,6 +16,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final temSessao = utilizadorInicial != null;
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
@@ -21,15 +25,26 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (_) => LocationProvider()),
         ChangeNotifierProvider(create: (_) => PoiProvider()),
+        ChangeNotifierProvider(create: (_) => ItineraryProvider()),
       ],
       child: MaterialApp(
         title: 'Algarve Explorer',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        // Se há sessão válida vai para /home, caso contrário para /login
-        initialRoute:
-            utilizadorInicial != null ? AppRoutes.home : AppRoutes.login,
-        routes: AppRoutes.routes,
+        // Sessão válida → vai direto para o shell (com tabs Início/Mapa/Perfil)
+        // Sem sessão → vai para o login
+        initialRoute: temSessao ? '/shell' : AppRoutes.login,
+        routes: {
+          '/shell': (context) => const ShellLayout(),
+          ...AppRoutes.routes,
+        },
+        onUnknownRoute: (settings) {
+          return MaterialPageRoute(
+            builder: (context) => const Scaffold(
+              body: Center(child: Text('Página não encontrada')),
+            ),
+          );
+        },
       ),
     );
   }

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
 
 /// Tema global da aplicação.
@@ -10,20 +10,19 @@ class AppTheme {
       brightness: Brightness.light,
       primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.background,
-      
+
       // Cores do Material 3
       colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
         secondary: AppColors.secondary,
         surface: AppColors.surface,
-        background: AppColors.background,
         error: AppColors.error,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
         onSurface: AppColors.textPrimary,
-        onBackground: AppColors.textPrimary,
+        //onBackground: AppColors.textPrimary, 
       ),
-      
+
       // Tipografia
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
@@ -50,7 +49,7 @@ class AppTheme {
           color: AppColors.primary,
         ),
       ),
-      
+
       // Botões
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -65,7 +64,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // Inputs
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -76,7 +75,8 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.borderRadius),
-          borderSide: BorderSide(color: AppColors.textSecondary.withOpacity(0.3)),
+          borderSide:
+              BorderSide(color: AppColors.textSecondary.withValues(alpha: 0.3)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.borderRadius),
@@ -84,7 +84,7 @@ class AppTheme {
         ),
         contentPadding: const EdgeInsets.all(AppSpacing.md),
       ),
-      
+
       // Cards
       cardTheme: CardThemeData(
         elevation: 2,

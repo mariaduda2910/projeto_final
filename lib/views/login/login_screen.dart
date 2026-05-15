@@ -1,4 +1,4 @@
-﻿import 'dart:math';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
@@ -6,7 +6,7 @@ import '../../providers/auth_provider.dart';
 import 'register_modal.dart';
 
 /// Tela de Login - Algarve Explorer
-/// 
+///
 /// Design baseado em Figma com as seguintes características:
 /// - Logo original: onda em círculo com gradiente azul
 /// - Campos com focus animados (border azul + sombra)
@@ -14,11 +14,11 @@ import 'register_modal.dart';
 /// - Animações de entrada (fade + slide)
 /// - Pontos decorativos pulsantes na base
 /// - Link para criar conta (abre RegisterModal)
-/// 
+///
 /// Integração:
 /// - Provider para autenticação (AuthProvider)
 /// - Validação de email e password
-/// - Navegação automática para /home ao fazer login com sucesso
+/// - Navegação automática para /shell ao fazer login com sucesso
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -28,24 +28,23 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with TickerProviderStateMixin {
-  
   // ============ CONTROLADORES ============
   /// GlobalKey para validação do formulário
   final _formKey = GlobalKey<FormState>();
-  
+
   /// Controlador para o campo de email
   final _emailController = TextEditingController();
-  
+
   /// Controlador para o campo de password
   final _passwordController = TextEditingController();
 
   // ============ ANIMAÇÕES ============
   /// Controlador para animação de entrada da tela (fade + slide)
   late AnimationController _fadeController;
-  
+
   /// Animation: Fade da tela (0 -> 1)
   late Animation<double> _fadeAnimation;
-  
+
   /// Estado do campo focado (email | password | null)
   /// Usado para animar a sombra azul no field
   String? _focusedField;
@@ -53,17 +52,17 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void initState() {
     super.initState();
-    
+
     // Animação de entrada: fade suave (800ms) com curva easeOut
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
-    
+
     _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _fadeController, curve: Curves.easeOut),
     );
-    
+
     // Inicia a animação
     _fadeController.forward();
   }
@@ -82,14 +81,19 @@ class _LoginScreenState extends State<LoginScreen>
   /// - Se sucesso: navega para /home
   /// - Se erro: exibe erro no AuthProvider
   Future<void> _fazerLogin() async {
+    print(' Login iniciado...'); // ← ADICIONA
     if (_formKey.currentState?.validate() ?? false) {
       final sucesso = await context.read<AuthProvider>().login(
             _emailController.text.trim(),
             _passwordController.text,
           );
-      
+      print(' Login sucesso: $sucesso');
+      print(' mounted: $mounted');
       if (sucesso && mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
+        print('Navegando para /shell...');
+        Navigator.pushReplacementNamed(context, '/shell');
+
+        /// Quando faz login com sucesso, vai para /shell em vez de /home.
       }
     }
   }
@@ -117,41 +121,36 @@ class _LoginScreenState extends State<LoginScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const SizedBox(height: 32),
-                      
+
                       // 🌊 ONDA ANIMADA COM GRADIENTE (logo original)
                       _buildWaveIcon(),
-                      
+
                       const SizedBox(height: 48),
-                      
+
                       // 🏷️ TÍTULO
                       Text(
                         AppConstants.appName,
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineLarge
-                            ?.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: -0.5,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.headlineLarge?.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -0.5,
+                                ),
                       ),
-                      
+
                       const SizedBox(height: 8),
-                      
+
                       // ✨ SUBTÍTULO
                       Text(
                         'Descubra o paraíso costeiro',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyLarge
-                            ?.copyWith(
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               color: AppColors.textSecondary,
                               letterSpacing: 0.3,
                             ),
                       ),
-                      
+
                       const SizedBox(height: 48),
-                      
+
                       // 📧 CAMPO EMAIL
                       _buildInputField(
                         controller: _emailController,
@@ -174,9 +173,9 @@ class _LoginScreenState extends State<LoginScreen>
                           return null;
                         },
                       ),
-                      
+
                       const SizedBox(height: 24),
-                      
+
                       // 🔒 CAMPO PASSWORD
                       _buildInputField(
                         controller: _passwordController,
@@ -196,9 +195,9 @@ class _LoginScreenState extends State<LoginScreen>
                           return null;
                         },
                       ),
-                      
+
                       const SizedBox(height: 8),
-                      
+
                       // 🔗 ESQUECI-ME DA PASSWORD
                       Align(
                         alignment: Alignment.centerRight,
@@ -206,8 +205,8 @@ class _LoginScreenState extends State<LoginScreen>
                           onPressed: () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text(
-                                    'Funcionalidade em desenvolvimento'),
+                                content:
+                                    Text('Funcionalidade em desenvolvimento'),
                               ),
                             );
                           },
@@ -221,9 +220,9 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
                         ),
                       ),
-                      
+
                       const SizedBox(height: 24),
-                      
+
                       // ⚠️ MENSAGEM DE ERRO
                       if (auth.error != null)
                         Container(
@@ -249,9 +248,9 @@ class _LoginScreenState extends State<LoginScreen>
                             ],
                           ),
                         ),
-                      
+
                       const SizedBox(height: 24),
-                      
+
                       // 🚀 BOTÃO ENTRAR
                       SizedBox(
                         width: double.infinity,
@@ -262,9 +261,9 @@ class _LoginScreenState extends State<LoginScreen>
                           onPressed: _fazerLogin,
                         ),
                       ),
-                      
+
                       const SizedBox(height: 32),
-                      
+
                       // 🔗 CRIAR CONTA
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -300,12 +299,12 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
                         ],
                       ),
-                      
+
                       const SizedBox(height: 32),
-                      
+
                       // 🌊 DECORAÇÃO INFERIOR
                       _buildDecorativeDots(),
-                      
+
                       const SizedBox(height: 24),
                     ],
                   ),
@@ -320,7 +319,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   // 🌊 ONDA ANIMADA COM GRADIENTE (logo original)
   /// Logo animado: Círculo com ícone de onda
-  /// 
+  ///
   /// Features:
   /// - Tamanho: 100x100 pixels
   /// - Gradiente diagonal: azul oceano (#0066CC) -> azul mais claro (#4A90D9)
@@ -356,7 +355,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   // 📧 CAMPO DE INPUT COM ANIMAÇÃO DE FOCUS
   /// Widget reutilizável para campos de input (email, password, etc)
-  /// 
+  ///
   /// Features:
   /// - Focus animado com sombra azul sutil
   /// - Border 2px que muda de cor ao fazer focus
@@ -466,7 +465,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   // 🚀 BOTÃO COM GRADIENTE
   /// Botão customizado com gradiente linear azul
-  /// 
+  ///
   /// Features:
   /// - Gradiente: #0066CC -> #0052A3 (diagonal)
   /// - Sombra drop: cor primária com 40% opacidade
@@ -547,12 +546,12 @@ class _LoginScreenState extends State<LoginScreen>
 
 // 🔵 WIDGET PONTO ANIMADO
 /// Ponto decorativo inferior que pulsa com animação suave
-/// 
+///
 /// Propósito:
 /// - Criar efeito visual decorativo na base da login screen
 /// - Indicar que há conteúdo/movimento na página
 /// - Delay permite sincronizar múltiplos pontos com efeito "onda"
-/// 
+///
 /// Animação:
 /// - Scale: 1.0 -> 1.2 -> 1.0 (usando sin)
 /// - Opacity: 0.3 -> 0.6 -> 0.3 (usando sin)
@@ -569,7 +568,7 @@ class _AnimatedDot extends StatefulWidget {
 
 /// Estado para o widget _AnimatedDot
 /// Gerencia a animação de pulsação contínua com delay
-/// 
+///
 /// Lifecycle:
 /// 1. initState: Cria AnimationController
 /// 2. Future.delayed: Aguarda `widget.delay` milissegundos
@@ -608,8 +607,9 @@ class _AnimatedDotState extends State<_AnimatedDot>
       builder: (context, child) {
         // Calcula scale e opacity usando função sin para movimento suave
         final scale = 1 + (sin(_animationController.value * 2 * 3.14159) * 0.2);
-        final opacity = 0.3 + (sin(_animationController.value * 2 * 3.14159) * 0.3);
-        
+        final opacity =
+            0.3 + (sin(_animationController.value * 2 * 3.14159) * 0.3);
+
         return Opacity(
           opacity: opacity,
           child: Transform.scale(

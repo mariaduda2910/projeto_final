@@ -1,9 +1,8 @@
-﻿// Service: geolocalização (Geolocator)
+// Service: geolocalização (Geolocator)
 import 'package:geolocator/geolocator.dart';
 
 /// Service para obter e gerir a localização do utilizador.
 class LocationService {
-  
   /// Verifica e pede permissões de localização.
   Future<bool> _verificarPermissoes() async {
     bool servicoAtivo = await Geolocator.isLocationServiceEnabled();
@@ -14,9 +13,9 @@ class LocationService {
       permissao = await Geolocator.requestPermission();
       if (permissao == LocationPermission.denied) return false;
     }
-    
+
     if (permissao == LocationPermission.deniedForever) return false;
-    
+
     return true;
   }
 

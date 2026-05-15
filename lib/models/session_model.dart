@@ -1,4 +1,4 @@
-﻿// Modelo: Sessão de autenticação
+// Modelo: Sessão de autenticação
 /// Guarda o estado da sessão do utilizador.
 /// Usado para persistir o login localmente no telemóvel.
 class SessionModel {
