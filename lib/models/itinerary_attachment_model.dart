@@ -21,6 +21,23 @@ class ItineraryAttachment {
     }
   }
 
-  Map<String, dynamic> toJson() => {};
-  factory ItineraryAttachment.fromJson(Map<String, dynamic> json) => throw UnimplementedError();
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'nome': nome,
+        'tipo': tipo,
+        'caminho_local': caminhoLocal,
+        'adicionado_em': adicionadoEm.toIso8601String(),
+        'tamanho_bytes': tamanhoBytes,
+      };
+
+  factory ItineraryAttachment.fromJson(Map<String, dynamic> json) {
+    return ItineraryAttachment(
+      id: json['id'],
+      nome: json['nome'],
+      tipo: json['tipo'],
+      caminhoLocal: json['caminho_local'],
+      adicionadoEm: DateTime.parse(json['adicionado_em']),
+      tamanhoBytes: json['tamanho_bytes'],
+    );
+  }
 }

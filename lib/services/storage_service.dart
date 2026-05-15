@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_constants.dart';
+import '../models/itinerary_model.dart';
 import '../models/session_model.dart';
 import '../models/user_model.dart';
 
@@ -17,6 +18,8 @@ class StorageService {
   // Chaves internas
   static const String _keyUser = 'LOGGED_USER';
   static const String _keyCredenciais = 'USER_CREDENTIALS';
+  static const String _keyRoteiros = 'USER_ITINERARIES';
+  static const String _keyRoteiroAtivo = 'ACTIVE_ITINERARY_ID';
 
   /// Inicializa o service. Chamar no main.dart antes de correr a app.
   Future<void> init() async {
@@ -93,6 +96,35 @@ class StorageService {
     if (dados == null) return {};
     return Map<String, dynamic>.from(jsonDecode(dados));
   }
+
+  // ─── Roteiros ───────────────────────────────────────────────────────────────
+
+  /// Guarda toda a lista de roteiros do utilizador.
+  Future<void> guardarRoteiros(List<ItineraryModel> roteiros) async {
+    final lista = roteiros.map((r) => r.toJson()).toList();
+    await _prefs?.setString(_keyRoteiros, jsonEncode(lista));
+  }
+
+  /// Lê todos os roteiros guardados. Retorna lista vazia se não houver.
+  List<ItineraryModel> obterRoteiros() {
+    final dados = _prefs?.getString(_keyRoteiros);
+    if (dados == null) return [];
+    final lista = jsonDecode(dados) as List;
+    return lista
+        .map((r) => ItineraryModel.fromJson(Map<String, dynamic>.from(r)))
+        .toList();
+  }
+
+  /// Guarda o ID do roteiro ativo (null para limpar).
+  Future<void> guardarRoteiroAtivoId(String? id) async {
+    if (id == null) {
+      await _prefs?.remove(_keyRoteiroAtivo);
+    } else {
+      await _prefs?.setString(_keyRoteiroAtivo, id);
+    }
+  }
+
+  String? obterRoteiroAtivoId() => _prefs?.getString(_keyRoteiroAtivo);
 
   // ─── Localização ────────────────────────────────────────────────────────────
 

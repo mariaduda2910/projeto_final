@@ -4,9 +4,15 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
+import 'package:provider/provider.dart';
+
 import '../../core/constants/app_constants.dart';
 import '../../models/poi_model.dart';
+import '../../providers/itinerary_provider.dart';
 import '../../services/geoapify_service.dart';
+import '../../widgets/itinerary/active_itinerary_picker.dart';
+import '../../widgets/itinerary/add_pois_to_itinerary_sheet.dart';
+import '../../widgets/map/active_route_info.dart';
 import '../../widgets/poi_marker.dart';
 
 /// Página do Mapa - Algarve Explorer v2.0
@@ -88,6 +94,78 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
   PoiModel? _poiSelecionado;
   final Set<String> _favoritos = {};
   final MapController _mapController = MapController();
+
+  // Modo de seleção múltipla para criar/adicionar a roteiros
+  bool _modoSelecao = false;
+  final Set<String> _poisSelecionadosParaRoteiro = {};
+
+  void _toggleModoSelecao() {
+    setState(() {
+      _modoSelecao = !_modoSelecao;
+      if (!_modoSelecao) _poisSelecionadosParaRoteiro.clear();
+      _poiSelecionado = null;
+    });
+  }
+
+  String _poiId(PoiModel poi) => poi.id ?? poi.placeId ?? '';
+
+  void _togglePoiSelecaoRoteiro(PoiModel poi) {
+    final id = _poiId(poi);
+    if (id.isEmpty) return;
+    setState(() {
+      if (_poisSelecionadosParaRoteiro.contains(id)) {
+        _poisSelecionadosParaRoteiro.remove(id);
+      } else {
+        _poisSelecionadosParaRoteiro.add(id);
+      }
+    });
+  }
+
+  Future<void> _abrirSheetAdicionarAoRoteiro() async {
+    final selecionados = _pois
+        .where((p) => _poisSelecionadosParaRoteiro.contains(_poiId(p)))
+        .toList();
+    if (selecionados.isEmpty) return;
+
+    final resultado = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (_, __) => AddPoisToItinerarySheet(pois: selecionados),
+      ),
+    );
+
+    if (resultado == true && mounted) {
+      setState(() {
+        _modoSelecao = false;
+        _poisSelecionadosParaRoteiro.clear();
+      });
+    }
+  }
+
+  void _abrirSeletorRoteiroAtivo() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.5,
+        minChildSize: 0.25,
+        maxChildSize: 0.85,
+        expand: false,
+        builder: (_, __) => const ActiveItineraryPicker(),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -371,14 +449,94 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
           _buildListaFlutuante(),
 
           // CAMADA 4: POI MARKER CARD
-          if (_poiSelecionado != null)
+          if (_poiSelecionado != null && !_modoSelecao)
             Positioned(
               bottom: 120,
               left: 0,
               right: 0,
               child: _buildPoiMarkerCard(),
             ),
+
+          // CAMADA 5: BARRA DE SELEÇÃO (quando _modoSelecao está ativo)
+          if (_modoSelecao)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: _buildBarraSelecao(),
+            ),
         ],
+      ),
+      floatingActionButton: _modoSelecao
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: _pois.isEmpty ? null : _toggleModoSelecao,
+              backgroundColor: AppColors.primary,
+              icon: const Icon(Icons.add_location_alt, color: Colors.white),
+              label: const Text(
+                'Adicionar ao roteiro',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+    );
+  }
+
+  // Barra inferior mostrada em modo de seleção
+  Widget _buildBarraSelecao() {
+    final count = _poisSelecionadosParaRoteiro.length;
+    return Material(
+      elevation: 8,
+      color: Colors.white,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+          child: Row(
+            children: [
+              IconButton(
+                onPressed: _toggleModoSelecao,
+                icon: const Icon(Icons.close),
+                tooltip: 'Cancelar seleção',
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      count == 0
+                          ? 'Toca em pontos para selecionar'
+                          : '$count ${count == 1 ? 'ponto selecionado' : 'pontos selecionados'}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    if (count > 0)
+                      const Text(
+                        'Carrega em "Adicionar" para escolher um roteiro',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: count == 0 ? null : _abrirSheetAdicionarAoRoteiro,
+                icon: const Icon(Icons.add),
+                label: const Text('Adicionar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -482,38 +640,133 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
   // ═══════════════════════════════════════════════════════════════════
 
   Widget _buildMapa() {
-    return Stack(
-      children: [
-        FlutterMap(
-          mapController: _mapController,
-          options: MapOptions(
-            initialCenter: _userLocation!,
-            initialZoom: 15,
-            onTap: (_, __) => setState(() => _poiSelecionado = null),
-          ),
+    return Consumer<ItineraryProvider>(
+      builder: (context, itineraryProvider, _) {
+        final ativo = itineraryProvider.roteiroAtivo;
+        final rota = itineraryProvider.rotaCalculada;
+
+        return Stack(
           children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.algarve.explorer',
+            FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: _userLocation!,
+                initialZoom: 15,
+                onTap: (_, __) => setState(() => _poiSelecionado = null),
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate:
+                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.algarve.explorer',
+                ),
+                // Polyline da rota Geoapify (segue estradas reais)
+                if (rota != null && rota.polyline.length >= 2)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: rota.polyline,
+                        color: AppColors.primary,
+                        strokeWidth: 5,
+                      ),
+                    ],
+                  ),
+                // Marcadores numerados das paragens do roteiro ativo
+                if (ativo != null && ativo.eventos.isNotEmpty)
+                  MarkerLayer(
+                    markers: ativo.eventos
+                        .map((e) => Marker(
+                              point: LatLng(e.poiLatitude, e.poiLongitude),
+                              width: 36,
+                              height: 36,
+                              child: _buildRoteiroParagemMarker(e.ordem),
+                            ))
+                        .toList(),
+                  ),
+                MarkerLayer(markers: _criarMarkers()),
+              ],
             ),
-            MarkerLayer(
-              markers: _criarMarkers(),
+            // BOTÃO ROTEIRO ATIVO (canto inferior direito, topo)
+            Positioned(
+              right: 16,
+              bottom: 340,
+              child: _buildRoteiroButton(itineraryProvider),
             ),
+            // BOTÃO FAVORITOS
+            Positioned(
+              right: 16,
+              bottom: 280,
+              child: _buildFavoritosButton(),
+            ),
+            // BOTÃO RECENTRAR
+            Positioned(
+              right: 16,
+              bottom: 220,
+              child: _buildRecentrarButton(),
+            ),
+            // Info da rota ativa (canto superior)
+            if (ativo != null)
+              Positioned(
+                top: 130,
+                left: 16,
+                right: 16,
+                child: const ActiveRouteInfo(),
+              ),
           ],
+        );
+      },
+    );
+  }
+
+  Widget _buildRoteiroParagemMarker(int ordem) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 3),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.5),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          '$ordem',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
         ),
-        // BOTÃO FAVORITOS (canto inferior direito, acima)
-        Positioned(
-          right: 16,
-          bottom: 280,
-          child: _buildFavoritosButton(),
+      ),
+    );
+  }
+
+  Widget _buildRoteiroButton(ItineraryProvider provider) {
+    final ativo = provider.roteiroAtivo;
+    return Material(
+      elevation: 4,
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: _abrirSeletorRoteiroAtivo,
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: ativo != null ? AppColors.primary : Colors.white,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.route,
+            color: ativo != null ? Colors.white : AppColors.primary,
+            size: 24,
+          ),
         ),
-        // BOTÃO RECENTRAR (canto inferior direito, abaixo)
-        Positioned(
-          right: 16,
-          bottom: 220,
-          child: _buildRecentrarButton(),
-        ),
-      ],
+      ),
     );
   }
 
@@ -620,6 +873,8 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
     for (final poi in _pois) {
       final ui = _getCategoriaUI(poi);
       final isFavorito = _favoritos.contains(poi.id);
+      final isSelecionadoParaRoteiro =
+          _poisSelecionadosParaRoteiro.contains(_poiId(poi));
 
       markers.add(
         Marker(
@@ -627,25 +882,41 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
           width: 50,
           height: 60,
           child: GestureDetector(
-            onTap: () => setState(() => _poiSelecionado = poi),
+            onTap: () {
+              if (_modoSelecao) {
+                _togglePoiSelecaoRoteiro(poi);
+              } else {
+                setState(() => _poiSelecionado = poi);
+              }
+            },
             child: Column(
               children: [
                 Container(
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: ui.cor,
+                    color: isSelecionadoParaRoteiro
+                        ? AppColors.primary
+                        : ui.cor,
                     shape: BoxShape.circle,
+                    border: isSelecionadoParaRoteiro
+                        ? Border.all(color: Colors.white, width: 3)
+                        : null,
                     boxShadow: [
                       BoxShadow(
-                        color: ui.cor.withOpacity(0.4),
+                        color: (isSelecionadoParaRoteiro
+                                ? AppColors.primary
+                                : ui.cor)
+                            .withOpacity(0.4),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       ),
                     ],
                   ),
                   child: Icon(
-                    isFavorito ? Icons.favorite : ui.icon,
+                    isSelecionadoParaRoteiro
+                        ? Icons.check
+                        : (isFavorito ? Icons.favorite : ui.icon),
                     color: Colors.white,
                     size: 20,
                   ),
@@ -654,7 +925,9 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                   width: 12,
                   height: 12,
                   decoration: BoxDecoration(
-                    color: ui.cor,
+                    color: isSelecionadoParaRoteiro
+                        ? AppColors.primary
+                        : ui.cor,
                     borderRadius: BorderRadius.circular(2),
                   ),
                   transform: Matrix4.rotationZ(0.785),

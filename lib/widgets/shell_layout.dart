@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/itinerary_provider.dart';
 import '../views/home/home_screen.dart';
 import '../views/map/poi_explorer_screen.dart';
 import '../views/profile/profile_screen.dart';
@@ -28,6 +29,15 @@ class _ShellLayoutState extends State<ShellLayout> {
     PoiExplorerScreen(), // index 1 - Mapa
     ProfileScreen(), // index 2 - Perfil
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Carrega roteiros guardados localmente assim que o shell aparece
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ItineraryProvider>().carregarRoteiros();
+    });
+  }
 
   void _onTabChanged(int index) {
     setState(() {

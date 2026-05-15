@@ -201,13 +201,13 @@ class _ItineraryListScreenState extends State<ItineraryListScreen> {
                     }
 
                     final provider = context.read<ItineraryProvider>();
-                    final success = await provider.criarRoteiro(
+                    await provider.criarRoteiro(
                       titulo: tituloCtrl.text.trim(),
                       dataInicio: dataInicio!,
                       dataFim: dataFim!,
                     );
 
-                    if (success && mounted) {
+                    if (mounted) {
                       if (poiInicial != null) {
                         final roteiros = provider.roteiros;
                         if (roteiros.isNotEmpty) {

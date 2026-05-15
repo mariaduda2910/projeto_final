@@ -25,8 +25,43 @@ class ItineraryEvent {
     required this.ordem, this.anexos = const [], this.visitado = false, this.notas,
   });
 
-  Map<String, dynamic> toJson() => {};
-  factory ItineraryEvent.fromJson(Map<String, dynamic> json) => throw UnimplementedError();
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'poi_id': poiId,
+        'poi_nome': poiNome,
+        'poi_latitude': poiLatitude,
+        'poi_longitude': poiLongitude,
+        'poi_endereco': poiEndereco,
+        'poi_categoria': poiCategoria,
+        'data_hora': dataHora?.toIso8601String(),
+        'periodo': periodo?.name,
+        'ordem': ordem,
+        'anexos': anexos.map((a) => a.toJson()).toList(),
+        'visitado': visitado,
+        'notas': notas,
+      };
+
+  factory ItineraryEvent.fromJson(Map<String, dynamic> json) {
+    return ItineraryEvent(
+      id: json['id'],
+      poiId: json['poi_id'],
+      poiNome: json['poi_nome'],
+      poiLatitude: (json['poi_latitude'] as num).toDouble(),
+      poiLongitude: (json['poi_longitude'] as num).toDouble(),
+      poiEndereco: json['poi_endereco'],
+      poiCategoria: json['poi_categoria'],
+      dataHora: json['data_hora'] != null ? DateTime.parse(json['data_hora']) : null,
+      periodo: json['periodo'] != null
+          ? PeriodoDia.values.firstWhere((p) => p.name == json['periodo'])
+          : null,
+      ordem: json['ordem'],
+      anexos: (json['anexos'] as List? ?? [])
+          .map((a) => ItineraryAttachment.fromJson(Map<String, dynamic>.from(a)))
+          .toList(),
+      visitado: json['visitado'] ?? false,
+      notas: json['notas'],
+    );
+  }
 
   ItineraryEvent copyWith({
     String? id, String? poiId, String? poiNome, double? poiLatitude,
