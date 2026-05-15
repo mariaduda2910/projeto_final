@@ -34,9 +34,23 @@ class Helpers {
 
   /// Formata uma data para o formato português.
   static String formatarData(DateTime data) {
-    return DateFormat('dd/MM/yyyy', 'pt_PT').format(data);
+    ///return DateFormat('dd/MM/yyyy', 'pt_PT').format(data); ->  NÃO usa DateFormat do intl — funciona sem initializeDateFormatting!
+    final dia = data.day.toString().padLeft(2, '0');
+    final mes = data.month.toString().padLeft(2, '0');
+    final ano = data.year.toString();
+    return '$dia/$mes/$ano';
   }
 
+   /// Formata data com hora (dd/MM/yyyy HH:mm).
+  static String formatarDataHora(DateTime data) {
+    final dia = data.day.toString().padLeft(2, '0');
+    final mes = data.month.toString().padLeft(2, '0');
+    final ano = data.year.toString();
+    final hora = data.hour.toString().padLeft(2, '0');
+    final minuto = data.minute.toString().padLeft(2, '0');
+    return '$dia/$mes/$ano $hora:$minuto';
+  }
+  
   /// Formata distância para exibição amigável.
   /// Ex: 1.2 km ou 450 m
   static String formatarDistancia(double distanciaKm) {

@@ -1,16 +1,24 @@
-// lib/views/home/home_screen.dart
-
+// lib/views/home/home_screen.dart — ATUALIZADO
+// Card de roteiro com botão "Criar Roteiro" quando vazio
+import 'package:algarve_explorer/models/itinerary_event_model.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../../core/constants/app_constants.dart';
+import '../../core/utils/helpers.dart';
+import '../../models/itinerary_model.dart';
+import '../../providers/itinerary_provider.dart';
+import '../itinerary/itinerary_list_screen.dart';
+import '../itinerary/itinerary_detail_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold( // Scaffold é necessário para ter o SafeArea e o bottomNavigationBar
-      body: SafeArea( //safe area para evitar notch, barra de status, etc porque??
-        child: SingleChildScrollView( 
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,7 +39,7 @@ class HomeScreen extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // CARD: ROTEIRO/ITINERÁRIO
+              // CARD: ROTEIRO (funcional)
               _buildRoteiroCard(context),
 
               const SizedBox(height: 24),
@@ -41,7 +49,7 @@ class HomeScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // MERCHANDISING (placeholder)
+              // MERCHANDISING
               _buildMerchandising(context),
             ],
           ),
@@ -51,6 +59,24 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildRoteiroCard(BuildContext context) {
+    return Consumer<ItineraryProvider>(
+      builder: (context, provider, _) {
+        final roteiroAtivo = provider.roteiroAtivo;
+
+        // Se tem roteiro ativo, mostra-o. Se não, mostra card vazio com botão criar.
+        if (roteiroAtivo != null) {
+          return _buildRoteiroAtivoCard(context, roteiroAtivo);
+        }
+
+        return _buildRoteiroVazioCard(context);
+      },
+    );
+  }
+
+  // ─── CARD COM ROTEIRO ATIVO ───
+  Widget _buildRoteiroAtivoCard(BuildContext context, ItineraryModel roteiro) {
+    final eventos = roteiro.eventos;
+
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -80,21 +106,21 @@ class HomeScreen extends StatelessWidget {
                     child: const Icon(Icons.map, color: Colors.white, size: 24),
                   ),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'O Meu Roteiro',
-                          style: TextStyle(
+                          roteiro.titulo,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
-                          '3 paragens • 12 km',
-                          style: TextStyle(
+                          '${eventos.length} paragens • ${Helpers.formatarData(roteiro.dataInicio)}',
+                          style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 14,
                           ),
@@ -102,37 +128,186 @@ class HomeScreen extends StatelessWidget {
                       ],
                     ),
                   ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text(
+                      'ATIVO',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
-              // Mini lista de paragens
-              _buildMiniParagem('Praia da Marinha', 'Praia', Colors.amber),
-              const SizedBox(height: 8),
-              _buildMiniParagem(
-                  'Restaurante O Leão', 'Restaurante', Colors.red),
-              const SizedBox(height: 8),
-              _buildMiniParagem('Castelo de Silves', 'Monumento', Colors.teal),
+
+              // Mini lista de paragens (máx 3)
+              if (eventos.isNotEmpty) ...[
+                ...eventos.take(3).map((evento) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _buildMiniParagem(
+                      evento.poiNome,
+                      _labelPeriodo(evento.periodo),
+                      _corPeriodo(evento.periodo),
+                    ),
+                  );
+                }),
+                if (eventos.length > 3)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      '+ ${eventos.length - 3} mais paragens',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+              ] else
+                Text(
+                  'Ainda sem paragens. Adiciona locais do mapa!',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 14,
+                  ),
+                ),
 
               const SizedBox(height: 16),
-              // Botão
+
+              // Botões
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ItineraryDetailScreen(roteiro: roteiro),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.route, color: AppColors.primary, size: 18),
+                      label: const Text(
+                        'Ver Roteiro',
+                        style: TextStyle(color: AppColors.primary),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/itinerary/list');
+                      },
+                      icon: const Icon(Icons.list, color: Colors.white, size: 18),
+                      label: const Text(
+                        'Todos os Roteiros',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.white.withOpacity(0.5)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─── CARD VAZIO COM BOTÃO CRIAR ───
+  Widget _buildRoteiroVazioCard(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.map_outlined,
+                  color: AppColors.primary.withOpacity(0.5),
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Ainda não tens roteiros',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Cria o teu primeiro roteiro para explorar o Algarve',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    // Navegar para Mapa com rota
-                    // TODO: Implementar
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ItineraryListScreen(),
+                      ),
+                    );
                   },
-                  icon: const Icon(Icons.route, color: AppColors.primary),
-                  label: const Text(
-                    'Ver no Mapa',
-                    style: TextStyle(color: AppColors.primary),
-                  ),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Criar Roteiro'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
               ),
@@ -156,14 +331,42 @@ class HomeScreen extends StatelessWidget {
           child: Text(
             nome,
             style: const TextStyle(color: Colors.white, fontSize: 14),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         Text(
           tipo,
-          style: TextStyle(color: Colors.white70, fontSize: 12),
+          style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12),
         ),
       ],
     );
+  }
+
+  Color _corPeriodo(PeriodoDia? periodo) {
+    switch (periodo) {
+      case PeriodoDia.manha:
+        return Colors.orange;
+      case PeriodoDia.tarde:
+        return Colors.white;
+      case PeriodoDia.noite:
+        return const Color(0xFFD1C4E9);
+      default:
+        return Colors.white70;
+    }
+  }
+
+   String _labelPeriodo(PeriodoDia? periodo) {
+    switch (periodo) {
+      case PeriodoDia.manha:
+        return 'Manhã';
+      case PeriodoDia.tarde:
+        return 'Tarde';
+      case PeriodoDia.noite:
+        return 'Noite';
+      default:
+        return 'Sem período';
+    }
   }
 
   Widget _buildFavoritosRapidos(BuildContext context) {
@@ -178,25 +381,22 @@ class HomeScreen extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             TextButton(
-              onPressed: () {
-                // Ir para Mapa > Favoritos
-              },
+              onPressed: () {},
               child: const Text('Ver todos'),
             ),
           ],
         ),
         const SizedBox(height: 12),
-        // Lista horizontal de favoritos
         SizedBox(
           height: 120,
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
               _buildFavoritoCard(
-                  'Praia da Marinha', Icons.beach_access, Colors.amber),
+                'Praia da Marinha', Icons.beach_access, Colors.amber),
               _buildFavoritoCard('O Leão', Icons.restaurant, Colors.red),
               _buildFavoritoCard(
-                  'Castelo Silves', Icons.account_balance, Colors.teal),
+                'Castelo Silves', Icons.account_balance, Colors.teal),
             ],
           ),
         ),

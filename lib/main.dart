@@ -1,6 +1,6 @@
 ﻿// Ponto de entrada da aplicação
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // ← adicionar
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'app.dart';
 import 'services/storage_service.dart';
 
