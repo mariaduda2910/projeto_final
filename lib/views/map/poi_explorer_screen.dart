@@ -201,6 +201,12 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
         _loadingLocation = false;
       });
 
+      // Partilha a posição atual com o ItineraryProvider para que ele a use
+      // como ponto de partida ao traçar a rota (assim 1 POI já chega).
+      if (mounted) {
+        context.read<ItineraryProvider>().definirPontoPartida(userLatLng);
+      }
+
       // Não buscar POIs automaticamente
     } catch (e) {
       setState(() {

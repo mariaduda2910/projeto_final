@@ -112,7 +112,7 @@ class ActiveItineraryPicker extends StatelessWidget {
                             ),
                             subtitle: Text(
                               '${r.totalParagens} ${r.totalParagens == 1 ? 'paragem' : 'paragens'}'
-                              '${r.totalParagens < 2 ? ' · precisas de pelo menos 2' : ''}',
+                              '${r.totalParagens == 0 ? ' · adiciona pontos primeiro' : ''}',
                             ),
                             trailing: selecionado
                                 ? const Icon(Icons.radio_button_checked,

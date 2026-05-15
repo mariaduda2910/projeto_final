@@ -145,11 +145,20 @@ class ActiveRouteInfo extends StatelessWidget {
                       ],
                     ),
                   )
-                else if (ativo.totalParagens < 2)
+                else if (ativo.totalParagens == 0)
                   const Padding(
                     padding: EdgeInsets.only(top: AppSpacing.sm),
                     child: Text(
-                      'Adiciona pelo menos 2 pontos para traçar a rota.',
+                      'Adiciona pontos ao roteiro para traçar a rota.',
+                      style: TextStyle(
+                          fontSize: 12, color: AppColors.textSecondary),
+                    ),
+                  )
+                else if (provider.pontoPartida == null)
+                  const Padding(
+                    padding: EdgeInsets.only(top: AppSpacing.sm),
+                    child: Text(
+                      'A obter a tua localização para traçar a rota…',
                       style: TextStyle(
                           fontSize: 12, color: AppColors.textSecondary),
                     ),

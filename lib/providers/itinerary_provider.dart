@@ -20,6 +20,26 @@ class ItineraryProvider extends ChangeNotifier {
   bool _calculandoRota = false;
   String? _error;
 
+  /// Posição atual do utilizador, usada como ponto de partida da rota.
+  /// Quando definida, basta 1 POI no roteiro para traçar uma rota.
+  LatLng? _pontoPartida;
+
+  LatLng? get pontoPartida => _pontoPartida;
+
+  /// Atualiza o ponto de partida (geralmente a posição GPS atual) e
+  /// recalcula a rota se houver roteiro ativo.
+  void definirPontoPartida(LatLng? ponto) {
+    final mudou = _pontoPartida?.latitude != ponto?.latitude ||
+        _pontoPartida?.longitude != ponto?.longitude;
+    _pontoPartida = ponto;
+    if (mudou && _roteiroAtivo != null && _roteiroAtivo!.eventos.isNotEmpty) {
+      // ignore: unawaited_futures
+      calcularRota();
+    } else {
+      notifyListeners();
+    }
+  }
+
   // ─── Getters ───────────────────────────────────────────────────────────────
 
   List<ItineraryModel> get roteiros => List.unmodifiable(_roteiros);
@@ -52,7 +72,7 @@ class ItineraryProvider extends ChangeNotifier {
     notifyListeners();
 
     // Se restaurou um roteiro ativo, calcula a rota em background
-    if (_roteiroAtivo != null && _roteiroAtivo!.eventos.length >= 2) {
+    if (_roteiroAtivo != null && _podeCalcularRota(_roteiroAtivo!)) {
       // ignore: unawaited_futures
       calcularRota();
     }
@@ -126,13 +146,22 @@ class ItineraryProvider extends ChangeNotifier {
 
     if (_roteiroAtivo?.id == roteiroId) {
       _roteiroAtivo = _roteiros[index];
-      // ignore: unawaited_futures
-      calcularRota();
+      if (_podeCalcularRota(_roteiroAtivo!)) {
+        // ignore: unawaited_futures
+        calcularRota();
+      }
     }
 
     await _persistir();
     notifyListeners();
     return true;
+  }
+
+  /// A rota só faz sentido com pelo menos 2 waypoints. Conta o ponto de
+  /// partida quando está definido.
+  bool _podeCalcularRota(ItineraryModel r) {
+    final base = _pontoPartida != null ? 1 : 0;
+    return r.eventos.length + base >= 2;
   }
 
   Future<bool> removerEvento(String roteiroId, String eventoId) async {
@@ -151,8 +180,12 @@ class ItineraryProvider extends ChangeNotifier {
 
     if (_roteiroAtivo?.id == roteiroId) {
       _roteiroAtivo = _roteiros[index];
-      // ignore: unawaited_futures
-      calcularRota();
+      if (_podeCalcularRota(_roteiroAtivo!)) {
+        // ignore: unawaited_futures
+        calcularRota();
+      } else {
+        _rotaCalculada = null;
+      }
     }
 
     await _persistir();
@@ -201,7 +234,7 @@ class ItineraryProvider extends ChangeNotifier {
     await _storage.guardarRoteiroAtivoId(_roteiroAtivo?.id);
     notifyListeners();
 
-    if (_roteiroAtivo != null && _roteiroAtivo!.eventos.length >= 2) {
+    if (_roteiroAtivo != null && _podeCalcularRota(_roteiroAtivo!)) {
       await calcularRota();
     } else {
       _rotaCalculada = null;
@@ -210,8 +243,16 @@ class ItineraryProvider extends ChangeNotifier {
   }
 
   /// Recalcula a rota Geoapify para o roteiro ativo.
+  /// Se houver [pontoPartida] definido, ele é usado como primeiro waypoint
+  /// (basta 1 POI no roteiro nesse caso).
   Future<void> calcularRota({String mode = 'drive'}) async {
-    if (_roteiroAtivo == null || _roteiroAtivo!.eventos.length < 2) {
+    if (_roteiroAtivo == null || _roteiroAtivo!.eventos.isEmpty) {
+      _rotaCalculada = null;
+      notifyListeners();
+      return;
+    }
+
+    if (!_podeCalcularRota(_roteiroAtivo!)) {
       _rotaCalculada = null;
       notifyListeners();
       return;
@@ -222,9 +263,11 @@ class ItineraryProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final waypoints = _roteiroAtivo!.eventos
-          .map((e) => LatLng(e.poiLatitude, e.poiLongitude))
-          .toList();
+      final waypoints = <LatLng>[
+        if (_pontoPartida != null) _pontoPartida!,
+        ..._roteiroAtivo!.eventos
+            .map((e) => LatLng(e.poiLatitude, e.poiLongitude)),
+      ];
 
       _rotaCalculada = await _geoapify.calcularRota(
         waypoints: waypoints,
