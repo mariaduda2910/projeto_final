@@ -1,6 +1,7 @@
 // lib/views/profile/profile_screen.dart
 import 'package:flutter/material.dart';
 import 'package:algarve_explorer/core/constants/app_constants.dart';
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -32,12 +33,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Text(
                 'Perfil',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
               ),
               const SizedBox(height: 32),
-              
+
               // Avatar + Nome
               Center(
                 child: Column(
@@ -51,12 +52,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.person, color: Colors.white, size: 40),
+                      child: const Icon(Icons.person,
+                          color: Colors.white, size: 40),
                     ),
                     const SizedBox(height: 16),
                     const Text(
                       'Turista',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                     ),
                     const Text(
                       'turista@algarve.pt',
@@ -65,15 +68,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // IDIOMA
               Text(
                 'Idioma',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
               const SizedBox(height: 12),
               Container(
@@ -98,18 +101,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Estatísticas
               Text(
                 'Estatísticas',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
               const SizedBox(height: 12),
-              _buildStatCard(Icons.favorite, 'Favoritos', '12 locais guardados'),
+              _buildStatCard(
+                  Icons.favorite, 'Favoritos', '12 locais guardados'),
               const SizedBox(height: 8),
               _buildStatCard(Icons.route, 'Rotas', '3 rotas planeadas'),
             ],
@@ -133,7 +137,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           child: Icon(icon, color: AppColors.primary),
         ),
-        title: Text(titulo, style: const TextStyle(fontWeight: FontWeight.w600)),
+        title:
+            Text(titulo, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(subtitulo, style: const TextStyle(fontSize: 13)),
         trailing: const Icon(Icons.chevron_right),
       ),

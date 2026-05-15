@@ -1,4 +1,4 @@
-﻿// Widget: Indicador de carregamento
+// Widget: Indicador de carregamento
 import 'package:flutter/material.dart';
 import '../core/constants/app_constants.dart';
 

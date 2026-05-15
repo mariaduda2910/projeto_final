@@ -18,7 +18,6 @@ class RegisterModal extends StatefulWidget {
 
 class _RegisterModalState extends State<RegisterModal>
     with SingleTickerProviderStateMixin {
-  
   // Controladores de texto para os campos de input
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -36,24 +35,24 @@ class _RegisterModalState extends State<RegisterModal>
   @override
   void initState() {
     super.initState();
-    
+
     // Setup animação de entrada (fade + slide)
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    
+
     _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
     ).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
-    
+
     // Inicia animação
     _animationController.forward();
   }
@@ -167,13 +166,11 @@ class _RegisterModalState extends State<RegisterModal>
                       // 📋 TÍTULO
                       Text(
                         'Criar Conta',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineSmall
-                            ?.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
 
                       const SizedBox(height: 8),
@@ -181,10 +178,7 @@ class _RegisterModalState extends State<RegisterModal>
                       // 📝 SUBTÍTULO
                       Text(
                         'Junte-se à comunidade Algarve Explorer',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: AppColors.textSecondary,
                             ),
                       ),
@@ -300,7 +294,8 @@ class _RegisterModalState extends State<RegisterModal>
                         isFocused: _focusedField == 'confirmPassword',
                         onFocusChange: (isFocused) {
                           setState(() {
-                            _focusedField = isFocused ? 'confirmPassword' : null;
+                            _focusedField =
+                                isFocused ? 'confirmPassword' : null;
                           });
                         },
                         obscureText: true,
@@ -470,8 +465,8 @@ class _RegisterModalState extends State<RegisterModal>
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [
-              AppColors.primary,        // #0066CC
-              Color(0xFF0052A3),        // Azul mais escuro
+              AppColors.primary, // #0066CC
+              Color(0xFF0052A3), // Azul mais escuro
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,

@@ -1,4 +1,4 @@
-﻿// Service: persistência local (SharedPreferences)
+// Service: persistência local (SharedPreferences)
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_constants.dart';
@@ -21,7 +21,7 @@ class StorageService {
   /// Guarda a sessão do utilizador localmente.
   Future<void> guardarSessao(SessionModel session) async {
     await _prefs?.setString(
-      AppConstants.keyToken, 
+      AppConstants.keyToken,
       jsonEncode(session.toJson()),
     );
   }
@@ -41,7 +41,7 @@ class StorageService {
   /// Guarda a última localização conhecida.
   Future<void> guardarUltimaLocalizacao(double lat, double lng) async {
     await _prefs?.setString(
-      AppConstants.keyLastLocation, 
+      AppConstants.keyLastLocation,
       '$lat,$lng',
     );
   }

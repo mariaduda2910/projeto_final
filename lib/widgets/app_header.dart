@@ -36,14 +36,14 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
             children: [
               // 🌊 LOGO (igual login)
               _buildLogo(),
-              
+
               const Spacer(),
-              
+
               // 🗺️ [Mapa] [Lista] [Desejos]
               _buildNavTabs(),
-              
+
               const SizedBox(width: 16),
-              
+
               // 👤 PERFIL
               _buildProfileButton(),
             ],

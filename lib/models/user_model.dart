@@ -1,4 +1,4 @@
-﻿// Modelo: Utilizador (Turista)
+// Modelo: Utilizador (Turista)
 /// Representa o turista logado na aplicação.
 class UserModel {
   final String email;

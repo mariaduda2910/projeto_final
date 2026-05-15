@@ -1,4 +1,4 @@
-﻿// Widget raiz: configuração de tema e providers
+// Widget raiz: configuração de tema e providers
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
@@ -6,7 +6,7 @@ import 'providers/auth_provider.dart';
 import 'providers/location_provider.dart';
 import 'providers/poi_provider.dart';
 import 'routes.dart';
-import 'widgets/shell_layout.dart'; 
+import 'widgets/shell_layout.dart';
 
 /// Widget raiz da aplicação.
 /// Configura tema, providers globais e rotas.
@@ -25,14 +25,14 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Algarve Explorer',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme, 
+        theme: AppTheme.lightTheme,
         initialRoute: '/shell', // Começa na tela de login
-         // ROTAS: define '/shell' PRIMEIRO, depois as outras
+        // ROTAS: define '/shell' PRIMEIRO, depois as outras
         routes: {
-          '/shell': (context) => const ShellLayout(),  // ← ANTES das outras
-          ...AppRoutes.routes,  // ← Depois expande as do routes.dart
+          '/shell': (context) => const ShellLayout(), // ← ANTES das outras
+          ...AppRoutes.routes, // ← Depois expande as do routes.dart
         },
-        
+
         // Fallback para rotas não definidas (segurança)
         onUnknownRoute: (settings) {
           return MaterialPageRoute(

@@ -1,4 +1,4 @@
-﻿// Provider: estado da localização
+// Provider: estado da localização
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/location_service.dart';
@@ -7,7 +7,7 @@ import '../services/location_service.dart';
 /// Mantém a posição atualizada para o mapa e a lista usarem.
 class LocationProvider extends ChangeNotifier {
   final LocationService _locationService = LocationService();
-  
+
   Position? _posicaoAtual;
   bool _aCarregar = false;
   String? _erro;

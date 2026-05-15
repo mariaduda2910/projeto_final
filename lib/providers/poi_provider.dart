@@ -1,4 +1,4 @@
-﻿// Provider: estado dos pontos turísticos
+// Provider: estado dos pontos turísticos
 import 'package:flutter/material.dart';
 import '../models/poi_model.dart';
 import '../core/utils/helpers.dart';
@@ -12,9 +12,8 @@ class PoiProvider extends ChangeNotifier {
 
   List<PoiModel> get pois => _poisFiltrados;
   bool get aCarregar => _aCarregar;
-  List<PoiModel> get rota => _pois
-      .where((p) => _poisSelecionados.contains(p.id))
-      .toList();
+  List<PoiModel> get rota =>
+      _pois.where((p) => _poisSelecionados.contains(p.id)).toList();
 
   /// Carrega pontos turísticos (mock por enquanto).
   Future<void> carregarPois() async {
@@ -23,7 +22,7 @@ class PoiProvider extends ChangeNotifier {
 
     // SIMULAÇÃO: dados mockados do Algarve
     await Future.delayed(const Duration(seconds: 1));
-    
+
     _pois = [
       PoiModel(
         id: '1',
@@ -52,7 +51,7 @@ class PoiProvider extends ChangeNotifier {
         //imagemUrl: null,
       ),
     ];
-    
+
     _poisFiltrados = List.from(_pois);
     _aCarregar = false;
     notifyListeners();
@@ -61,8 +60,10 @@ class PoiProvider extends ChangeNotifier {
   /// Ordena POIs por proximidade a uma coordenada.
   void ordenarPorProximidade(double lat, double lng) {
     _poisFiltrados.sort((a, b) {
-      final distA = Helpers.calcularDistancia(lat, lng, a.latitude, a.longitude);
-      final distB = Helpers.calcularDistancia(lat, lng, b.latitude, b.longitude);
+      final distA =
+          Helpers.calcularDistancia(lat, lng, a.latitude, a.longitude);
+      final distB =
+          Helpers.calcularDistancia(lat, lng, b.latitude, b.longitude);
       return distA.compareTo(distB);
     });
     notifyListeners();

@@ -1,10 +1,10 @@
-﻿// lib/widgets/poi_marker_card.dart
+// lib/widgets/poi_marker_card.dart
 import 'package:flutter/material.dart';
 import '../core/constants/app_constants.dart';
 import '../models/poi_model.dart';
 
 /// Card flutuante que aparece quando clicas num pin no mapa.
-/// 
+///
 /// Uso:
 /// PoiMarkerCard(
 ///   poi: meuPoi,
@@ -18,6 +18,7 @@ class PoiMarkerCard extends StatelessWidget {
   final VoidCallback onToggleFavorito;
   final VoidCallback onFechar;
   final bool isFavorito;
+  final bool deveDestacarVermelho; // Novo parâmetro
 
   const PoiMarkerCard({
     super.key,
@@ -26,6 +27,7 @@ class PoiMarkerCard extends StatelessWidget {
     required this.onToggleFavorito,
     required this.onFechar,
     this.isFavorito = false,
+    this.deveDestacarVermelho = false, // Default false
   });
 
   @override
@@ -58,15 +60,23 @@ class PoiMarkerCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.primary, Color(0xFF4A90D9)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    gradient: deveDestacarVermelho
+                        ? const LinearGradient(
+                            colors: [Colors.red, Color(0xFFB71C1C)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          )
+                        : const LinearGradient(
+                            colors: [AppColors.primary, Color(0xFF4A90D9)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    isFavorito ? Icons.favorite : _iconeCategoria(poi.categoriaPrincipal ?? ''),
+                    isFavorito
+                        ? Icons.favorite
+                        : _iconeCategoria(poi.categoriaPrincipal ?? ''),
                     color: Colors.white,
                     size: 24,
                   ),
@@ -80,6 +90,7 @@ class PoiMarkerCard extends StatelessWidget {
                         poi.nome,
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
+                          color: deveDestacarVermelho ? Colors.red[700] : null,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -88,7 +99,8 @@ class PoiMarkerCard extends StatelessWidget {
                       Row(
                         children: [
                           if (poi.avaliacao != null) ...[
-                            const Icon(Icons.star, size: 14, color: Colors.amber),
+                            const Icon(Icons.star,
+                                size: 14, color: Colors.amber),
                             const SizedBox(width: 4),
                             Text(
                               '${poi.avaliacao}',
@@ -100,7 +112,8 @@ class PoiMarkerCard extends StatelessWidget {
                             const SizedBox(width: 8),
                           ],
                           if (poi.distancia != null) ...[
-                            const Icon(Icons.route, size: 14, color: AppColors.textSecondary),
+                            const Icon(Icons.route,
+                                size: 14, color: AppColors.textSecondary),
                             const SizedBox(width: 4),
                             Text(
                               _formatarDistancia(poi.distancia!),
@@ -183,39 +196,48 @@ class PoiMarkerCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: deveDestacarVermelho
+                        ? Colors.red.withOpacity(0.1)
+                        : AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     poi.categoriaPrincipal ?? 'Local',
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.primary,
+                      color: deveDestacarVermelho ? Colors.red[700] : AppColors.primary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
-                if (poi.horario != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _estaAberto(poi.horario) 
-                          ? Colors.green.withOpacity(0.1) 
-                          : Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _estaAberto(poi.horario) ? 'Aberto agora' : 'Fechado',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: _estaAberto(poi.horario) ? Colors.green : Colors.red,
-                        fontWeight: FontWeight.w600,
-                      ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: deveDestacarVermelho
+                        ? Colors.red.withOpacity(0.1)
+                        : (_estaAberto(poi.horario)
+                            ? Colors.green.withOpacity(0.1)
+                            : Colors.red.withOpacity(0.1)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    deveDestacarVermelho
+                        ? 'Horário indisponível'
+                        : (_estaAberto(poi.horario) ? 'Aberto agora' : 'Fechado'),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: deveDestacarVermelho
+                          ? Colors.red[700]
+                          : (_estaAberto(poi.horario) ? Colors.green : Colors.red),
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
+                ),
               ],
             ),
 
@@ -235,12 +257,15 @@ class PoiMarkerCard extends StatelessWidget {
                     label: Text(
                       isFavorito ? 'Guardado' : 'Guardar',
                       style: TextStyle(
-                        color: isFavorito ? Colors.red : AppColors.textSecondary,
+                        color:
+                            isFavorito ? Colors.red : AppColors.textSecondary,
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(
-                        color: isFavorito ? Colors.red : AppColors.textSecondary.withOpacity(0.3),
+                        color: isFavorito
+                            ? Colors.red
+                            : AppColors.textSecondary.withOpacity(0.3),
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -341,10 +366,12 @@ class PoiMarkerCard extends StatelessWidget {
     if (cat.contains('cafe')) return Icons.local_cafe;
     if (cat.contains('bar')) return Icons.local_bar;
     if (cat.contains('hotel')) return Icons.hotel;
-    if (cat.contains('attraction') || cat.contains('tourism')) return Icons.attractions;
+    if (cat.contains('attraction') || cat.contains('tourism'))
+      return Icons.attractions;
     if (cat.contains('museum')) return Icons.museum;
     if (cat.contains('pharmacy')) return Icons.local_pharmacy;
-    if (cat.contains('supermarket') || cat.contains('commercial')) return Icons.shopping_cart;
+    if (cat.contains('supermarket') || cat.contains('commercial'))
+      return Icons.shopping_cart;
     if (cat.contains('beach')) return Icons.beach_access;
     if (cat.contains('park')) return Icons.park;
     return Icons.place;

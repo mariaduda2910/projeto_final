@@ -1,4 +1,4 @@
-﻿// lib/views/home/home_screen.dart
+// lib/views/home/home_screen.dart
 
 import 'package:flutter/material.dart';
 import '../../core/constants/app_constants.dart';
@@ -8,9 +8,9 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
+    return Scaffold( // Scaffold é necessário para ter o SafeArea e o bottomNavigationBar
+      body: SafeArea( //safe area para evitar notch, barra de status, etc porque??
+        child: SingleChildScrollView( 
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -19,28 +19,28 @@ class HomeScreen extends StatelessWidget {
               Text(
                 'Bem-vindo ao Algarve! 🌊',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
               ),
               const SizedBox(height: 8),
               const Text(
                 'Planeia a tua próxima aventura',
                 style: TextStyle(color: AppColors.textSecondary),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // CARD: ROTEIRO/ITINERÁRIO
               _buildRoteiroCard(context),
-              
+
               const SizedBox(height: 24),
-              
+
               // CARD: FAVORITOS RÁPIDOS
               _buildFavoritosRapidos(context),
-              
+
               const SizedBox(height: 24),
-              
+
               // MERCHANDISING (placeholder)
               _buildMerchandising(context),
             ],
@@ -108,10 +108,11 @@ class HomeScreen extends StatelessWidget {
               // Mini lista de paragens
               _buildMiniParagem('Praia da Marinha', 'Praia', Colors.amber),
               const SizedBox(height: 8),
-              _buildMiniParagem('Restaurante O Leão', 'Restaurante', Colors.red),
+              _buildMiniParagem(
+                  'Restaurante O Leão', 'Restaurante', Colors.red),
               const SizedBox(height: 8),
               _buildMiniParagem('Castelo de Silves', 'Monumento', Colors.teal),
-              
+
               const SizedBox(height: 16),
               // Botão
               SizedBox(
@@ -191,9 +192,11 @@ class HomeScreen extends StatelessWidget {
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
-              _buildFavoritoCard('Praia da Marinha', Icons.beach_access, Colors.amber),
+              _buildFavoritoCard(
+                  'Praia da Marinha', Icons.beach_access, Colors.amber),
               _buildFavoritoCard('O Leão', Icons.restaurant, Colors.red),
-              _buildFavoritoCard('Castelo Silves', Icons.account_balance, Colors.teal),
+              _buildFavoritoCard(
+                  'Castelo Silves', Icons.account_balance, Colors.teal),
             ],
           ),
         ),

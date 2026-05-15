@@ -1,4 +1,4 @@
-﻿// Widget: Card de ponto turístico para listas
+// Widget: Card de ponto turístico para listas
 import 'package:flutter/material.dart';
 import '../core/constants/app_constants.dart';
 import '../core/utils/helpers.dart';
@@ -25,7 +25,7 @@ class PoiCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool aberto = Helpers.estaAberto(poi.horaAbertura, poi.horaFecho);
-    
+
     return Card(
       child: InkWell(
         onTap: onTap,
@@ -48,7 +48,7 @@ class PoiCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
-              
+
               // Informações
               Expanded(
                 child: Column(
@@ -77,7 +77,7 @@ class PoiCard extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: aberto 
+                            color: aberto
                                 ? AppColors.openStatus.withOpacity(0.1)
                                 : AppColors.closedStatus.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(4),
@@ -86,8 +86,8 @@ class PoiCard extends StatelessWidget {
                             aberto ? 'Aberto' : 'Fechado',
                             style: TextStyle(
                               fontSize: 12,
-                              color: aberto 
-                                  ? AppColors.openStatus 
+                              color: aberto
+                                  ? AppColors.openStatus
                                   : AppColors.closedStatus,
                               fontWeight: FontWeight.w600,
                             ),
@@ -105,16 +105,18 @@ class PoiCard extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               // Botão adicionar à rota
               if (onToggleRota != null)
                 IconButton(
                   onPressed: onToggleRota,
                   icon: Icon(
-                    isSelecionado 
-                        ? Icons.check_circle 
+                    isSelecionado
+                        ? Icons.check_circle
                         : Icons.add_circle_outline,
-                    color: isSelecionado ? AppColors.accent : AppColors.textSecondary,
+                    color: isSelecionado
+                        ? AppColors.accent
+                        : AppColors.textSecondary,
                   ),
                 ),
             ],
@@ -138,10 +140,12 @@ class PoiCard extends StatelessWidget {
     if (cat.contains('cafe')) return Icons.local_cafe;
     if (cat.contains('bar')) return Icons.local_bar;
     if (cat.contains('hotel')) return Icons.hotel;
-    if (cat.contains('attraction') || cat.contains('tourism')) return Icons.attractions;
+    if (cat.contains('attraction') || cat.contains('tourism'))
+      return Icons.attractions;
     if (cat.contains('museum')) return Icons.museum;
     if (cat.contains('pharmacy')) return Icons.local_pharmacy;
-    if (cat.contains('supermarket') || cat.contains('commercial')) return Icons.shopping_cart;
+    if (cat.contains('supermarket') || cat.contains('commercial'))
+      return Icons.shopping_cart;
     if (cat.contains('beach')) return Icons.beach_access;
     if (cat.contains('park')) return Icons.park;
     return Icons.place;

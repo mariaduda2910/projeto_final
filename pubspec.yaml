@@ -11,7 +11,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-    
+  
+  # Internacionalização
+  intl: ^0.20.2
 
   # Variáveis de ambiente
   flutter_dotenv: ^5.1.0

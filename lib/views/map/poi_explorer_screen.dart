@@ -1,4 +1,4 @@
-﻿// lib/views/map/poi_explorer_screen.dart
+// lib/views/map/poi_explorer_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -29,15 +29,24 @@ class _CategoriaUI {
 }
 
 final Map<String, _CategoriaUI> _categoriaUI = {
-  'catering.restaurant': const _CategoriaUI('Restaurantes', Icons.restaurant, Color(0xFFFF6B6B)),
-  'catering.cafe': const _CategoriaUI('Cafés', Icons.local_cafe, Color(0xFFFFB347)),
-  'catering.bar': const _CategoriaUI('Bares', Icons.local_bar, Color(0xFFAA96DA)),
-  'accommodation.hotel': const _CategoriaUI('Hotéis', Icons.hotel, Color(0xFF4ECDC4)),
-  'tourism.attraction': const _CategoriaUI('Atrações', Icons.attractions, Color(0xFFF38181)),
-  'entertainment.museum': const _CategoriaUI('Museus', Icons.museum, Color(0xFF95E1D3)),
-  'commercial.supermarket': const _CategoriaUI('Supermercados', Icons.shopping_cart, Color(0xFF74B9FF)),
-  'healthcare.pharmacy': const _CategoriaUI('Farmácias', Icons.local_pharmacy, Color(0xFFFD79A8)),
-  'natural.beach': const _CategoriaUI('Praias', Icons.beach_access, Color(0xFFFFD93D)),
+  'catering.restaurant':
+      const _CategoriaUI('Restaurantes', Icons.restaurant, Color(0xFFFF6B6B)),
+  'catering.cafe':
+      const _CategoriaUI('Cafés', Icons.local_cafe, Color(0xFFFFB347)),
+  'catering.bar':
+      const _CategoriaUI('Bares', Icons.local_bar, Color(0xFFAA96DA)),
+  'accommodation.hotel':
+      const _CategoriaUI('Hotéis', Icons.hotel, Color(0xFF4ECDC4)),
+  'tourism.attraction':
+      const _CategoriaUI('Atrações', Icons.attractions, Color(0xFFF38181)),
+  'entertainment.museum':
+      const _CategoriaUI('Museus', Icons.museum, Color(0xFF95E1D3)),
+  'commercial.supermarket': const _CategoriaUI(
+      'Supermercados', Icons.shopping_cart, Color(0xFF74B9FF)),
+  'healthcare.pharmacy':
+      const _CategoriaUI('Farmácias', Icons.local_pharmacy, Color(0xFFFD79A8)),
+  'natural.beach':
+      const _CategoriaUI('Praias', Icons.beach_access, Color(0xFFFFD93D)),
   'leisure.park': const _CategoriaUI('Parques', Icons.park, Color(0xFF55EFC4)),
 };
 
@@ -60,13 +69,12 @@ final List<String> _categoriasDisponiveis = [
 
 class _PoiExplorerScreenState extends State<PoiExplorerScreen>
     with SingleTickerProviderStateMixin {
-  
   final GeoapifyService _geoapifyService = GeoapifyService();
   late final TabController _tabController;
 
   LatLng? _userLocation;
   List<PoiModel> _pois = [];
-  
+
   bool _loadingLocation = true;
   bool _loadingPois = false;
   String? _error;
@@ -127,8 +135,8 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
     });
 
     try {
-      final categoriasParaBuscar = _selectedCategories.isEmpty 
-          ? _categoriasDisponiveis 
+      final categoriasParaBuscar = _selectedCategories.isEmpty
+          ? _categoriasDisponiveis
           : _selectedCategories.toList();
 
       final resultados = await _geoapifyService.buscarLocaisProximos(
@@ -142,6 +150,9 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
 
       setState(() {
         _pois = resultados;
+        if (_soAbertos) {
+          _pois = _pois.where((poi) => _estaAberto(poi)).toList();
+        }
         _loadingPois = false;
       });
 
@@ -171,10 +182,12 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
       throw Exception('Permissão de localização negada.');
     }
     if (permission == LocationPermission.deniedForever) {
-      throw Exception('A permissão de localização foi bloqueada permanentemente.');
+      throw Exception(
+          'A permissão de localização foi bloqueada permanentemente.');
     }
 
-    return Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    return Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
   }
 
   void _alternarCategoria(String category) {
@@ -185,6 +198,101 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
         _selectedCategories.add(category);
       }
     });
+  }
+
+  /// Verifica se um POI está aberto agora baseado no campo 'horario' (opening_hours da Geoapify).
+  bool _estaAberto(PoiModel poi) {
+    if (poi.horario == null || poi.horario!.isEmpty) {
+      return true; // Se não tem horário, assume aberto
+    }
+
+    final now = DateTime.now();
+    final dayOfWeek = _getDayAbbrev(now.weekday); // Ex: 'Mo', 'Tu', etc.
+    final currentTime = TimeOfDay.fromDateTime(now);
+
+    // Parse a string: "Mo-Fr 09:00-18:00; Sa 10:00-16:00"
+    final rules = poi.horario!.split(';').map((r) => r.trim()).toList();
+
+    for (final rule in rules) {
+      if (_ruleMatches(rule, dayOfWeek, currentTime)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /// Retorna abreviação do dia da semana (Geoapify format).
+  String _getDayAbbrev(int weekday) {
+    const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+    return days[weekday % 7];
+  }
+
+  /// Verifica se uma regra de horário corresponde ao dia e hora atuais.
+  bool _ruleMatches(String rule, String day, TimeOfDay currentTime) {
+    // Exemplo: "Mo-Fr 09:00-18:00"
+    final parts = rule.split(' ');
+    if (parts.length < 2) return false;
+
+    final daysRange = parts[0]; // "Mo-Fr"
+    final timeRange = parts[1]; // "09:00-18:00"
+
+    // Verifica se o dia atual está no range
+    if (!_dayInRange(day, daysRange)) return false;
+
+    // Verifica se a hora atual está no range
+    return _timeInRange(currentTime, timeRange);
+  }
+
+  /// Verifica se o dia está no range (ex: "Mo-Fr" inclui "Tu").
+  bool _dayInRange(String day, String range) {
+    if (range == day) return true; // Exato match
+
+    final days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+    final dayIndex = days.indexOf(day);
+
+    if (range.contains('-')) {
+      final split = range.split('-');
+      if (split.length == 2) {
+        final start = days.indexOf(split[0]);
+        final end = days.indexOf(split[1]);
+        if (start != -1 && end != -1) {
+          return dayIndex >= start && dayIndex <= end;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /// Verifica se a hora está no range (ex: "09:00-18:00").
+  bool _timeInRange(TimeOfDay time, String range) {
+    final times = range.split('-');
+    if (times.length != 2) return false;
+
+    final start = _parseTime(times[0]);
+    final end = _parseTime(times[1]);
+
+    if (start == null || end == null) return false;
+
+    final current = time.hour * 60 + time.minute;
+    final startMin = start.hour * 60 + start.minute;
+    final endMin = end.hour * 60 + end.minute;
+
+    return current >= startMin && current <= endMin;
+  }
+
+  /// Parse uma string "HH:MM" para TimeOfDay.
+  TimeOfDay? _parseTime(String timeStr) {
+    final parts = timeStr.split(':');
+    if (parts.length == 2) {
+      final hour = int.tryParse(parts[0]);
+      final minute = int.tryParse(parts[1]);
+      if (hour != null && minute != null) {
+        return TimeOfDay(hour: hour, minute: minute);
+      }
+    }
+    return null;
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -203,7 +311,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
   // NOVO helper para encontrar categoria:
   _CategoriaUI _getCategoriaUI(PoiModel poi) {
     final cat = poi.categoriaPrincipal?.toLowerCase() ?? '';
-    
+
     // Mapeamento direto das categorias da API Geoapify
     if (cat == 'tourism') return _categoriaUI['tourism.attraction']!;
     if (cat == 'catering') return _categoriaUI['catering.restaurant']!;
@@ -213,19 +321,21 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
     if (cat == 'leisure') return _categoriaUI['leisure.park']!;
     if (cat == 'accommodation') return _categoriaUI['accommodation.hotel']!;
     if (cat == 'healthcare') return _categoriaUI['healthcare.pharmacy']!;
-    
+
     // Fallback para substrings (para subcategorias como catering.restaurant)
     if (cat.contains('restaurant')) return _categoriaUI['catering.restaurant']!;
     if (cat.contains('cafe')) return _categoriaUI['catering.cafe']!;
     if (cat.contains('bar')) return _categoriaUI['catering.bar']!;
     if (cat.contains('hotel')) return _categoriaUI['accommodation.hotel']!;
-    if (cat.contains('attraction') || cat.contains('tourism')) return _categoriaUI['tourism.attraction']!;
+    if (cat.contains('attraction') || cat.contains('tourism'))
+      return _categoriaUI['tourism.attraction']!;
     if (cat.contains('museum')) return _categoriaUI['entertainment.museum']!;
-    if (cat.contains('supermarket') || cat.contains('commercial')) return _categoriaUI['commercial.supermarket']!;
+    if (cat.contains('supermarket') || cat.contains('commercial'))
+      return _categoriaUI['commercial.supermarket']!;
     if (cat.contains('pharmacy')) return _categoriaUI['healthcare.pharmacy']!;
     if (cat.contains('beach')) return _categoriaUI['natural.beach']!;
     if (cat.contains('park')) return _categoriaUI['leisure.park']!;
-    
+
     // Fallback
     return const _CategoriaUI('Local', Icons.place, AppColors.primary);
   }
@@ -248,7 +358,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
         children: [
           // CAMADA 1: MAPA
           _buildMapa(),
-          
+
           // CAMADA 2: FILTROS + TOGGLE (topo)
           Positioned(
             top: 0,
@@ -256,10 +366,10 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
             right: 0,
             child: _buildFiltrosComToggle(),
           ),
-          
+
           // CAMADA 3: LISTA FLUTUANTE
           _buildListaFlutuante(),
-          
+
           // CAMADA 4: POI MARKER CARD
           if (_poiSelecionado != null)
             Positioned(
@@ -344,13 +454,15 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                   color: Colors.red.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.error_outline, size: 40, color: Colors.red),
+                child: const Icon(Icons.error_outline,
+                    size: 40, color: Colors.red),
               ),
               const SizedBox(height: 16),
               Text(
                 _error!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16, color: AppColors.textPrimary),
+                style:
+                    const TextStyle(fontSize: 16, color: AppColors.textPrimary),
               ),
               const SizedBox(height: 24),
               _buildGradientButton(
@@ -386,7 +498,6 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
             ),
             MarkerLayer(
               markers: _criarMarkers(),
-              
             ),
           ],
         ),
@@ -509,7 +620,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
     for (final poi in _pois) {
       final ui = _getCategoriaUI(poi);
       final isFavorito = _favoritos.contains(poi.id);
-      
+
       markers.add(
         Marker(
           point: LatLng(poi.latitude, poi.longitude),
@@ -564,7 +675,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
 
   Widget _buildFiltrosComToggle() {
     return Container(
-      color: Colors.white.withOpacity(0.95),
+      color: Colors.white.withValues(alpha:0.95),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -575,9 +686,10 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
               children: [
                 Switch(
                   value: _soAbertos,
-                  activeColor: AppColors.primary,
+                  activeThumbColor: AppColors.primary,
                   onChanged: (value) {
                     setState(() => _soAbertos = value);
+                    _pesquisarPois();
                   },
                 ),
                 const Text(
@@ -613,7 +725,8 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                     ui.label,
                     style: TextStyle(
                       fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w500,
                       color: isSelected ? Colors.white : ui.cor,
                     ),
                   ),
@@ -674,7 +787,8 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
               ),
               // Header
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -742,10 +856,17 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
     final ui = _getCategoriaUI(poi);
     final isFavorito = _favoritos.contains(poi.id);
 
+    // Lógica para destacar POIs sem horário quando filtro "só abertos" está ativo
+    final deveDestacarVermelho = _soAbertos && !_estaAberto(poi);
+    final corCard = deveDestacarVermelho ? Colors.red.withOpacity(0.1) : Colors.white;
+    final corBorda = deveDestacarVermelho ? Colors.red.withOpacity(0.3) : Colors.transparent;
+
     return Card(
       elevation: 2,
+      color: corCard,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: corBorda, width: 1),
       ),
       child: InkWell(
         onTap: () => _navegarParaDetalhes(poi),
@@ -759,7 +880,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: ui.cor,
+                  color: deveDestacarVermelho ? Colors.red : ui.cor,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Center(
@@ -777,9 +898,10 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                   children: [
                     Text(
                       poi.nome,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
+                        color: deveDestacarVermelho ? Colors.red[700] : null,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -794,14 +916,16 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: ui.cor.withOpacity(0.15),
+                            color: deveDestacarVermelho
+                                ? Colors.red.withOpacity(0.15)
+                                : ui.cor.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Text(
                             ui.label,
                             style: TextStyle(
                               fontSize: 12,
-                              color: ui.cor,
+                              color: deveDestacarVermelho ? Colors.red[700] : ui.cor,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -812,7 +936,9 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                             poi.categoriaPrincipal!,
                             style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.textSecondary,
+                              color: deveDestacarVermelho
+                                  ? Colors.red[600]
+                                  : AppColors.textSecondary,
                             ),
                           ),
                       ],
@@ -821,13 +947,17 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                     Row(
                       children: [
                         if (poi.distancia != null) ...[
-                          Icon(Icons.route, size: 14, color: AppColors.primary),
+                          Icon(
+                            Icons.route,
+                            size: 14,
+                            color: deveDestacarVermelho ? Colors.red : AppColors.primary,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             _formatarDistancia(poi.distancia!),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
-                              color: AppColors.primary,
+                              color: deveDestacarVermelho ? Colors.red[700] : AppColors.primary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -838,7 +968,28 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                           const SizedBox(width: 4),
                           Text(
                             '${poi.avaliacao}',
-                            style: const TextStyle(fontSize: 13),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: deveDestacarVermelho ? Colors.red[600] : null,
+                            ),
+                          ),
+                        ],
+                        // Indicador de horário indisponível
+                        if (deveDestacarVermelho) ...[
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.access_time,
+                            size: 14,
+                            color: Colors.red[600],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Horário indisponível',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.red[600],
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ],
                       ],
@@ -846,7 +997,10 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: Colors.grey[400]),
+              Icon(
+                Icons.chevron_right,
+                color: deveDestacarVermelho ? Colors.red[400] : Colors.grey[400],
+              ),
             ],
           ),
         ),
@@ -862,6 +1016,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
     return PoiMarkerCard(
       poi: _poiSelecionado!,
       isFavorito: _favoritos.contains(_poiSelecionado!.id),
+      deveDestacarVermelho: _soAbertos && !_estaAberto(_poiSelecionado!),
       onFechar: () {
         if (mounted) {
           setState(() => _poiSelecionado = null);
@@ -890,8 +1045,9 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
   // ═══════════════════════════════════════════════════════════════════
 
   void _mostrarFavoritos() {
-    final favoritosPois = _pois.where((p) => _favoritos.contains(p.id)).toList();
-    
+    final favoritosPois =
+        _pois.where((p) => _favoritos.contains(p.id)).toList();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -936,31 +1092,32 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                   ),
                   Expanded(
                     child: favoritosPois.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.favorite_border, size: 64, color: Colors.grey[300]),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Ainda não guardaste nenhum local',
-                                style: TextStyle(color: Colors.grey[500]),
-                              ),
-                            ],
+                        ? Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.favorite_border,
+                                    size: 64, color: Colors.grey[300]),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Ainda não guardaste nenhum local',
+                                  style: TextStyle(color: Colors.grey[500]),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            controller: controller,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: favoritosPois.length,
+                            itemBuilder: (context, index) {
+                              final poi = favoritosPois[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _buildPoiListCard(poi),
+                              );
+                            },
                           ),
-                        )
-                      : ListView.builder(
-                          controller: controller,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: favoritosPois.length,
-                          itemBuilder: (context, index) {
-                            final poi = favoritosPois[index];
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _buildPoiListCard(poi),
-                            );
-                          },
-                        ),
                   ),
                 ],
               ),

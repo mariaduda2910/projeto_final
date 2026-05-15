@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/constants/app_constants.dart';
 
 /// Header reutilizável do Algarve Explorer
-/// 
+///
 /// Uso:
 /// CustomAppBar(
 ///   selectedIndex: 0,           // 0=Início, 1=Mapa, 2=Perfil
@@ -53,7 +53,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               // 🌊 LOGO (igual do login)
               _buildLogo(),
               const SizedBox(width: 24),
-              
+
               // 📑 TABS
               Expanded(
                 child: Row(
@@ -67,7 +67,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   ],
                 ),
               ),
-              
+
               // 🔓 LOGOUT
               _buildLogoutButton(),
             ],
@@ -97,7 +97,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   /// Tab: Início | Mapa | Perfil
   Widget _buildTab(String label, int index) {
     final isSelected = selectedIndex == index;
-    
+
     return GestureDetector(
       onTap: () => onTabChanged(index),
       child: Column(
@@ -106,9 +106,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           Text(
             label,
             style: TextStyle(
-              color: isSelected 
-                  ? Colors.white 
-                  : Colors.white.withOpacity(0.6),
+              color: isSelected ? Colors.white : Colors.white.withOpacity(0.6),
               fontSize: 14,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               letterSpacing: 0.3,

@@ -81,34 +81,16 @@ class GeoapifyService {
     required PoiModel poi,
     required List<String> features,
   }) async {
-    if (poi.placeId == null || poi.placeId!.isEmpty) {
+    if (poi.id == null || poi.id!.trim().isEmpty) {
       return poi;
     }
 
-    try {
-      final response = await _dio.get(
-        _detailsUrl,
-        queryParameters: {
-          'id': poi.placeId,
-          'features': features.join(','),
-          'apiKey': _apiKey,
-        },
-      );
+    final detalhe = await buscarDetalhesPorPlaceId(
+      placeId: poi.id!,
+      features: features,
+    );
 
-      final List detalhesFeatures = response.data['features'] ?? [];
-
-      if (detalhesFeatures.isEmpty) {
-        return poi;
-      }
-
-      final detalhesFeature = Map<String, dynamic>.from(detalhesFeatures.first);
-
-      return poi.copyWithDetalhes(detalhesFeature);
-    } on DioException {
-      return poi;
-    } catch (_) {
-      return poi;
-    }
+    return detalhe ?? poi;
   }
 
   Future<PoiModel?> buscarDetalhesPorPlaceId({

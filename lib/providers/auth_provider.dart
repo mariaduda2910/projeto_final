@@ -1,4 +1,4 @@
-﻿// Provider: estado de autenticação (Provider package)
+// Provider: estado de autenticação (Provider package)
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
@@ -7,7 +7,7 @@ import '../services/auth_service.dart';
 /// Notifica todas as telas quando o utilizador faz login/logout.
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
-  
+
   UserModel? _user;
   bool _isLoading = false;
   String? _error;

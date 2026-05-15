@@ -3,7 +3,7 @@
   final String? placeId;
 
   final String nome;
-  final String? descricao;
+  final String descricao;
 
   final String? categoriaPrincipal;
   final List<String> categorias;
@@ -33,10 +33,10 @@
   final Map<String, dynamic>? raw;
 
   PoiModel({
-    this.id,
+    required this.id,
     this.placeId,
-    required this.nome,
-    this.descricao,
+    required this.nome, //este campo é obrigatório, pois é o mínimo para mostrar um POI na lista
+    required this.descricao,
 
     // Atenção: aqui NÃO usamos this.categoriaPrincipal,
     // porque vamos inicializar no final com categoriaPrincipal ?? categoria
@@ -97,7 +97,7 @@
       nome: _valorNaoVazio(properties['name']) ??
           _valorNaoVazio(properties['formatted']) ??
           'Local sem nome',
-      descricao: _valorNaoVazio(properties['description']),
+      descricao: _valorNaoVazio(properties['description']) ?? 'Sem descrição',
       categoriaPrincipal: categorias.isNotEmpty
           ? categorias.first
           : _valorNaoVazio(properties['category']),
@@ -202,5 +202,34 @@
     if (value is num) return value.toDouble();
 
     return double.tryParse(value.toString());
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      if (id != null) 'id': id,
+      if (placeId != null) 'placeId': placeId,
+      'nome': nome,
+      'descricao': descricao,
+      if (categoriaPrincipal != null) 'categoriaPrincipal': categoriaPrincipal,
+      'categorias': categorias,
+      if (endereco != null) 'endereco': endereco,
+      if (cidade != null) 'cidade': cidade,
+      if (pais != null) 'pais': pais,
+      if (codigoPostal != null) 'codigoPostal': codigoPostal,
+      'latitude': latitude,
+      'longitude': longitude,
+      if (distancia != null) 'distancia': distancia,
+      if (telefone != null) 'telefone': telefone,
+      if (email != null) 'email': email,
+      if (website != null) 'website': website,
+      if (horario != null) 'horario': horario,
+      if (cozinha != null) 'cozinha': cozinha,
+      if (tipo != null) 'tipo': tipo,
+      'horaAbertura': horaAbertura,
+      'horaFecho': horaFecho,
+      if (avaliacao != null) 'avaliacao': avaliacao,
+      if (detalhesRaw != null) 'detalhesRaw': detalhesRaw,
+      if (raw != null) 'raw': raw,
+    };
   }
 }
