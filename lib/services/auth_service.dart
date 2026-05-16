@@ -2,10 +2,12 @@
 import '../models/session_model.dart';
 import '../models/user_model.dart';
 import 'storage_service.dart';
+import 'sync_service.dart';
 
 /// Service responsável por toda a lógica de autenticação local.
 class AuthService {
   final StorageService _storage = StorageService();
+  final SyncService _sync = SyncService();
 
   // ─── Login ─────────────────────────────────────────────────────────────────
 
@@ -61,9 +63,22 @@ class AuthService {
 
     if (id == null) throw AuthException('Este email já está registado.');
 
-    // Após registo faz login automático
+    // Após registo faz login automático (cria sessão local)
     final user = await login(email, password);
     if (user == null) throw AuthException('Erro ao criar sessão após registo.');
+
+    // Envia o novo utilizador ao JSON Server (sync em background).
+    // Se estiver offline, fica na fila e é enviado quando voltar a internet.
+    // ignore: unawaited_futures
+    _sync.enfileirar(
+      tipo: SyncTipo.create,
+      recurso: SyncRecurso.users,
+      payload: {
+        ...user.toJson(),
+        'password': password, // inclui password só ao criar
+      },
+    );
+
     return user;
   }
 
