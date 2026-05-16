@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api_service.dart';
@@ -83,14 +84,13 @@ class SyncService {
 
     // Quando a internet volta, processa a fila automaticamente
     _connectivitySub = _connectivity.onStatusChange.listen((online) {
+      debugPrint('[SyncService] 🌐 rede mudou: ${online ? "online" : "offline"}');
       if (online) processarFila();
     });
 
-    // Tenta processar a fila já à partida (caso a app tenha aberto online)
-    if (_connectivity.estaOnline) {
-      // ignore: unawaited_futures
-      processarFila();
-    }
+    // Tenta processar SEMPRE — o próprio pedido HTTP avisa se não houver rede.
+    // ignore: unawaited_futures
+    processarFila();
   }
 
   void dispose() {
@@ -99,7 +99,10 @@ class SyncService {
 
   // ─── API pública ───────────────────────────────────────────────────────────
 
-  /// Enfileira uma operação. Se houver internet, envia logo.
+  /// Enfileira uma operação e tenta logo enviá-la.
+  ///
+  /// Sempre tenta processar — o `connectivity_plus` no Web pode mentir, por
+  /// isso confiamos no próprio pedido HTTP para falhar se não houver rede.
   Future<void> enfileirar({
     required SyncTipo tipo,
     required SyncRecurso recurso,
@@ -119,11 +122,12 @@ class SyncService {
     fila.add(op);
     await _gravarFila(fila);
 
-    // Se estamos online, tenta processar agora mesmo
-    if (_connectivity.estaOnline) {
-      // ignore: unawaited_futures
-      processarFila();
-    }
+    debugPrint('[SyncService] 📥 enfileirado: ${tipo.name} ${recurso.name}'
+        ' (fila: ${fila.length})');
+
+    // Tenta processar imediatamente — não confiamos só no connectivity check
+    // ignore: unawaited_futures
+    processarFila();
   }
 
   /// Processa a fila de operações pendentes. Pára à primeira falha de rede
@@ -134,21 +138,30 @@ class SyncService {
 
     try {
       var fila = _lerFila();
+      if (fila.isEmpty) return;
+
+      debugPrint('[SyncService] 🔄 a processar ${fila.length} operações…');
+
       while (fila.isNotEmpty) {
         final op = fila.first;
         try {
           await _executar(op);
-          // Sucesso → remove da fila
           fila.removeAt(0);
           await _gravarFila(fila);
-        } on ApiException catch (_) {
-          // Falha de rede → deixa na fila para a próxima ronda
+          debugPrint(
+              '[SyncService] ✅ sincronizado: ${op.tipo.name} ${op.recurso.name}');
+        } on ApiException catch (e) {
+          debugPrint('[SyncService] ⚠️ falha de rede — fica em fila: $e');
           break;
-        } catch (_) {
-          // Erro irrecuperável (ex: payload inválido) → descarta
+        } catch (e, st) {
+          debugPrint('[SyncService] ❌ erro irrecuperável: $e\n$st');
           fila.removeAt(0);
           await _gravarFila(fila);
         }
+      }
+
+      if (fila.isEmpty) {
+        debugPrint('[SyncService] ✨ fila esvaziada');
       }
     } finally {
       _aProcessar = false;
