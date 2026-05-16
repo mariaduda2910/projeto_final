@@ -1,5 +1,16 @@
 {
-  "users": [],
+  "users": [
+    {
+      "id": "user_1778974439154",
+      "email": "maria@email.com",
+      "nome": "Maria",
+      "data_registo": "2026-05-17T00:33:59.154",
+      "data_expiracao": "2026-05-24T00:33:59.154",
+      "idioma_preferido": "pt",
+      "is_ativo": true,
+      "password": "senha1234"
+    }
+  ],
   "favoritos": [],
   "roteiros": [],
   "rotasPartilhadas": []

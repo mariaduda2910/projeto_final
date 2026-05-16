@@ -101,7 +101,7 @@ plain
 | **HTTP / Dio** | Comunicação com API REST |
 | **Flutter Local Notifications** | Notificações locais (opcional) |
 
-> **Backend (conceitual/futuro):** Python + FastAPI + OAuth2
+> **Backend (conceitual/futuro):** flutter e API do Geoapify
 
 ---
 
@@ -205,7 +205,7 @@ algarve_explorer/
 
 ## 🚀 Roadmap Futuro
 
-- [ ] Painel web de administração (Python + FastAPI)
+- [ ] Painel web de administração (flutter + API geoapify)
 - [ ] Módulo de cliente empresarial (white-label / branding personalizado)
 - [ ] Fluxo completo OAuth2 com renovação automática de tokens
 - [ ] Sistema de avaliações e comentários dos pontos turísticos

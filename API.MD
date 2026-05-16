@@ -1,6 +1,5 @@
 Vou explicar o código como se estivéssemos a lê-lo ficheiro por ficheiro, linha a linha, primeiro o GeoapifyService e depois o PoiModel. Assim consegues perceber não só o que faz, mas também a sintaxe Dart usada em cada parte.
 
-Pensado para 4s
 
 Claro. Vou explicar linha a linha, começando pelo ficheiro do serviço:
 

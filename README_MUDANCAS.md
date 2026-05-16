@@ -1,3 +1,29 @@
+# GUIA DETALHADO DO CÓDIGO FONTE:
+## PERSISTÊNCIA DE DADOS:
+- shared preferences -> Guarda dados localmente
+- json server -> Simula sincronização com servidor em nuvem, é um progrma node.js que lê o ficheiro db.json e expõe os dados como numa api rest ;
+- API geoapify -> Conectamos com api key na api da empresa Geoapify para obter informações dos locais próximos e detalhes sobre o mesmo; 
+
+#### Na persistencia de dados queremos que o shared preferences sincronize com o bd.json como aconteceria em um ambiente real de uma aplciação, pois queremos o compartilhamento de rotas e sincronização dos dados pessoais do cliente; 
+#### Dessa forma temos app funcionado offline e criamos uma fila de alteração para sincronizar quando detectamos internet com o connectivity_plus;
+
+lib/
+├── services/
+│   ├── api_service.dart (Wrapper baixo nível à volta do Dio. Métodos getRoteiros(), postRoteiro(json), deleteRoteiro(id), etc. Nada de lógica de sync — só HTTP.)      
+│   ├── sync_service.dart         
+│   ├── connectivity_service.dart 
+│   ├── storage_service.dart      
+│   ├── auth_service.dart
+│   ├── geoapify_service.dart
+│   └── location_service.dart
+│
+├── providers/
+│   ├── sync_provider.dart   
+└──
+
+# _____________________________________________________
+
+
 # 📝 GUIA DE MUDANÇAS — feature/detalhes-roteiro
 
 ## Como usar esta estrutura
