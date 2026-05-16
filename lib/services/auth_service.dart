@@ -16,11 +16,17 @@ class AuthService {
       final dados = _storage.verificarCredencial(email, password);
       if (dados == null) return null;
 
+      final dataExpiracao = dados['data_expiracao'] != null
+          ? DateTime.parse(dados['data_expiracao'])
+          : null;
+
       final user = UserModel(
+        id: dados['id'],
         email: dados['email'],
         nome: dados['nome'],
-        dataAtivacao: DateTime.parse(dados['data_ativacao']),
-        dataExpiracao: DateTime.parse(dados['data_expiracao']),
+        dataRegisto: DateTime.parse(dados['data_registo']),
+        dataExpiracao: dataExpiracao,
+        idiomaPreferido: dados['idioma_preferido'] ?? 'pt',
       );
 
       if (!user.isValido) return null; // conta expirada
@@ -28,7 +34,8 @@ class AuthService {
       final session = SessionModel(
         token: 'local_${email}_${DateTime.now().millisecondsSinceEpoch}',
         email: email,
-        expiryDate: user.dataExpiracao,
+        expiryDate:
+            dataExpiracao ?? DateTime.now().add(const Duration(days: 365)),
       );
 
       await _storage.guardarSessao(session);
@@ -46,13 +53,13 @@ class AuthService {
   /// Retorna o [UserModel] criado em caso de sucesso.
   /// Lança [AuthException] se o email já estiver registado.
   Future<UserModel> registar(String email, String password) async {
-    final registado = await _storage.registarCredencial(
-      email,
-      password,
-      _nomeAPartirDeEmail(email),
+    final id = await _storage.registarCredencial(
+      email: email,
+      password: password,
+      nome: _nomeAPartirDeEmail(email),
     );
 
-    if (!registado) throw AuthException('Este email já está registado.');
+    if (id == null) throw AuthException('Este email já está registado.');
 
     // Após registo faz login automático
     final user = await login(email, password);

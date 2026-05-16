@@ -60,31 +60,51 @@ class StorageService {
   // Numa app de produção usar um backend com hashing seguro (bcrypt, Argon2).
 
   /// Regista um utilizador localmente.
-  /// Retorna false se o email já estiver registado.
-  Future<bool> registarCredencial(String email, String password, String nome) async {
+  /// Retorna o `id` gerado em caso de sucesso; null se o email já existir.
+  Future<String?> registarCredencial({
+    required String email,
+    required String password,
+    required String nome,
+    String idiomaPreferido = 'pt',
+  }) async {
     final credenciais = _obterTodasCredenciais();
 
-    if (credenciais.containsKey(email)) return false;
+    if (credenciais.containsKey(email)) return null;
+
+    final id = 'user_${DateTime.now().millisecondsSinceEpoch}';
+    final agora = DateTime.now();
 
     credenciais[email] = {
+      'id': id,
       'password': password,
       'nome': nome,
-      'data_ativacao': DateTime.now().toIso8601String(),
+      'data_registo': agora.toIso8601String(),
       'data_expiracao':
-          DateTime.now().add(const Duration(days: AppConstants.sessionTimeoutDays)).toIso8601String(),
+          agora.add(const Duration(days: AppConstants.sessionTimeoutDays)).toIso8601String(),
+      'idioma_preferido': idiomaPreferido,
     };
 
     await _prefs?.setString(_keyCredenciais, jsonEncode(credenciais));
-    return true;
+    return id;
   }
 
   /// Verifica se email + password são válidos.
-  /// Retorna os dados do utilizador se válido, null caso contrário.
+  /// Retorna os dados do utilizador (incluindo `id`) se válido, null caso contrário.
+  /// Para registos antigos sem `id`, gera um e persiste (auto-migração).
   Map<String, dynamic>? verificarCredencial(String email, String password) {
     final credenciais = _obterTodasCredenciais();
     final entrada = credenciais[email];
     if (entrada == null) return null;
     if (entrada['password'] != password) return null;
+
+    // Auto-migração: contas registadas antes de existir `id` recebem um agora.
+    if (entrada['id'] == null) {
+      entrada['id'] = 'user_${DateTime.now().millisecondsSinceEpoch}';
+      credenciais[email] = entrada;
+      // ignore: discarded_futures
+      _prefs?.setString(_keyCredenciais, jsonEncode(credenciais));
+    }
+
     return {'email': email, ...entrada};
   }
 
