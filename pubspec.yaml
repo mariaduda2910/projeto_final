@@ -34,6 +34,9 @@ dependencies:
   # Requisições HTTP
   dio: ^5.4.0
 
+  # Deteção online/offline (para sincronização com JSON Server)
+  connectivity_plus: ^5.0.2
+
   #para abrir links externos (ex: Google Maps)
   url_launcher: ^6.3.0
 
