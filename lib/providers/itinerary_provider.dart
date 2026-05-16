@@ -6,12 +6,15 @@ import '../models/itinerary_model.dart';
 import '../models/route_result_model.dart';
 import '../services/geoapify_service.dart';
 import '../services/storage_service.dart';
+import '../services/sync_service.dart';
 
 /// Gere a lista de roteiros do utilizador, o roteiro ativo (visível no
 /// mapa) e o cálculo da rota real via Geoapify Routing.
+/// Sincroniza com o JSON Server via [SyncService] sempre que algo muda.
 class ItineraryProvider extends ChangeNotifier {
   final StorageService _storage = StorageService();
   final GeoapifyService _geoapify = GeoapifyService();
+  final SyncService _sync = SyncService();
 
   List<ItineraryModel> _roteiros = [];
   ItineraryModel? _roteiroAtivo;
@@ -21,13 +24,10 @@ class ItineraryProvider extends ChangeNotifier {
   String? _error;
 
   /// Posição atual do utilizador, usada como ponto de partida da rota.
-  /// Quando definida, basta 1 POI no roteiro para traçar uma rota.
   LatLng? _pontoPartida;
 
   LatLng? get pontoPartida => _pontoPartida;
 
-  /// Atualiza o ponto de partida (geralmente a posição GPS atual) e
-  /// recalcula a rota se houver roteiro ativo.
   void definirPontoPartida(LatLng? ponto) {
     final mudou = _pontoPartida?.latitude != ponto?.latitude ||
         _pontoPartida?.longitude != ponto?.longitude;
@@ -52,7 +52,6 @@ class ItineraryProvider extends ChangeNotifier {
 
   // ─── Inicialização ─────────────────────────────────────────────────────────
 
-  /// Carrega todos os roteiros guardados localmente.
   Future<void> carregarRoteiros() async {
     _isLoading = true;
     notifyListeners();
@@ -71,7 +70,6 @@ class ItineraryProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
 
-    // Se restaurou um roteiro ativo, calcula a rota em background
     if (_roteiroAtivo != null && _podeCalcularRota(_roteiroAtivo!)) {
       // ignore: unawaited_futures
       calcularRota();
@@ -85,8 +83,11 @@ class ItineraryProvider extends ChangeNotifier {
     required DateTime dataInicio,
     required DateTime dataFim,
   }) async {
+    final userId = _storage.obterUser()?.id ?? '';
+
     final novo = ItineraryModel(
       id: _gerarId(),
+      userId: userId,
       titulo: titulo,
       dataInicio: dataInicio,
       dataFim: dataFim,
@@ -96,6 +97,14 @@ class ItineraryProvider extends ChangeNotifier {
 
     _roteiros = [..._roteiros, novo];
     await _persistir();
+
+    // Sync → POST /roteiros
+    _sync.enfileirar(
+      tipo: SyncTipo.create,
+      recurso: SyncRecurso.roteiros,
+      payload: novo.toJson(),
+    );
+
     notifyListeners();
     return novo;
   }
@@ -108,14 +117,20 @@ class ItineraryProvider extends ChangeNotifier {
       await _storage.guardarRoteiroAtivoId(null);
     }
     await _persistir();
+
+    // Sync → DELETE /roteiros/:id
+    _sync.enfileirar(
+      tipo: SyncTipo.delete,
+      recurso: SyncRecurso.roteiros,
+      recursoId: roteiroId,
+    );
+
     notifyListeners();
     return true;
   }
 
   // ─── Eventos (paragens) ────────────────────────────────────────────────────
 
-  /// Adiciona um POI como nova paragem no fim do roteiro.
-  /// Retorna false se o POI já existir no roteiro.
   Future<bool> adicionarPoiAoRoteiro({
     required String roteiroId,
     required String poiId,
@@ -142,10 +157,12 @@ class ItineraryProvider extends ChangeNotifier {
       ordem: roteiro.eventos.length + 1,
     );
 
-    _roteiros[index] = roteiro.copyWith(eventos: [...roteiro.eventos, evento]);
+    final roteiroAtualizado =
+        roteiro.copyWith(eventos: [...roteiro.eventos, evento]);
+    _roteiros[index] = roteiroAtualizado;
 
     if (_roteiroAtivo?.id == roteiroId) {
-      _roteiroAtivo = _roteiros[index];
+      _roteiroAtivo = roteiroAtualizado;
       if (_podeCalcularRota(_roteiroAtivo!)) {
         // ignore: unawaited_futures
         calcularRota();
@@ -153,12 +170,11 @@ class ItineraryProvider extends ChangeNotifier {
     }
 
     await _persistir();
+    _sincronizarRoteiro(roteiroAtualizado);
     notifyListeners();
     return true;
   }
 
-  /// A rota só faz sentido com pelo menos 2 waypoints. Conta o ponto de
-  /// partida quando está definido.
   bool _podeCalcularRota(ItineraryModel r) {
     final base = _pontoPartida != null ? 1 : 0;
     return r.eventos.length + base >= 2;
@@ -176,10 +192,11 @@ class ItineraryProvider extends ChangeNotifier {
       reordenados.add(eventos[i].copyWith(ordem: i + 1));
     }
 
-    _roteiros[index] = roteiro.copyWith(eventos: reordenados);
+    final roteiroAtualizado = roteiro.copyWith(eventos: reordenados);
+    _roteiros[index] = roteiroAtualizado;
 
     if (_roteiroAtivo?.id == roteiroId) {
-      _roteiroAtivo = _roteiros[index];
+      _roteiroAtivo = roteiroAtualizado;
       if (_podeCalcularRota(_roteiroAtivo!)) {
         // ignore: unawaited_futures
         calcularRota();
@@ -189,6 +206,7 @@ class ItineraryProvider extends ChangeNotifier {
     }
 
     await _persistir();
+    _sincronizarRoteiro(roteiroAtualizado);
     notifyListeners();
     return true;
   }
@@ -202,19 +220,19 @@ class ItineraryProvider extends ChangeNotifier {
     final eventos = roteiro.eventos
         .map((e) => e.id == eventoId ? e.copyWith(visitado: visitado) : e)
         .toList();
-    _roteiros[index] = roteiro.copyWith(eventos: eventos);
+    final roteiroAtualizado = roteiro.copyWith(eventos: eventos);
+    _roteiros[index] = roteiroAtualizado;
 
-    if (_roteiroAtivo?.id == roteiroId) _roteiroAtivo = _roteiros[index];
+    if (_roteiroAtivo?.id == roteiroId) _roteiroAtivo = roteiroAtualizado;
 
     await _persistir();
+    _sincronizarRoteiro(roteiroAtualizado);
     notifyListeners();
     return true;
   }
 
   // ─── Roteiro ativo + cálculo de rota ───────────────────────────────────────
 
-  /// Escolhe qual o roteiro a mostrar no mapa e calcula a rota Geoapify.
-  /// Passa null para limpar o roteiro ativo.
   Future<void> definirRoteiroAtivo(String? roteiroId) async {
     if (roteiroId == null) {
       _roteiroAtivo = null;
@@ -242,9 +260,6 @@ class ItineraryProvider extends ChangeNotifier {
     }
   }
 
-  /// Recalcula a rota Geoapify para o roteiro ativo.
-  /// Se houver [pontoPartida] definido, ele é usado como primeiro waypoint
-  /// (basta 1 POI no roteiro nesse caso).
   Future<void> calcularRota({String mode = 'drive'}) async {
     if (_roteiroAtivo == null || _roteiroAtivo!.eventos.isEmpty) {
       _rotaCalculada = null;
@@ -286,6 +301,18 @@ class ItineraryProvider extends ChangeNotifier {
 
   Future<void> _persistir() => _storage.guardarRoteiros(_roteiros);
 
+  /// Sincroniza o roteiro completo com o servidor (PATCH).
+  /// Como as paragens estão embebidas, qualquer alteração precisa
+  /// de reenviar o roteiro inteiro.
+  void _sincronizarRoteiro(ItineraryModel roteiro) {
+    _sync.enfileirar(
+      tipo: SyncTipo.update,
+      recurso: SyncRecurso.roteiros,
+      recursoId: roteiro.id,
+      payload: roteiro.toJson(),
+    );
+  }
+
   String _gerarId() {
     final now = DateTime.now();
     return '${now.millisecondsSinceEpoch}_${now.microsecond}';
@@ -298,7 +325,6 @@ class ItineraryProvider extends ChangeNotifier {
 
   // ─── Compatibilidade com chamadas antigas ──────────────────────────────────
 
-  /// API antiga usada pelos ecrãs de detalhe / lista de roteiros.
   Future<bool> adicionarEventoAoRoteiro({
     required String roteiroId,
     required String poiId,
@@ -318,7 +344,6 @@ class ItineraryProvider extends ChangeNotifier {
     );
   }
 
-  /// Reordena as paragens de um roteiro segundo a lista de IDs fornecida.
   Future<bool> reordenarEventos(
       String roteiroId, List<String> eventoIdsOrdenados) async {
     final index = _roteiros.indexWhere((r) => r.id == roteiroId);
@@ -334,14 +359,16 @@ class ItineraryProvider extends ChangeNotifier {
       }
     }
 
-    _roteiros[index] = roteiro.copyWith(eventos: reordenados);
+    final roteiroAtualizado = roteiro.copyWith(eventos: reordenados);
+    _roteiros[index] = roteiroAtualizado;
     if (_roteiroAtivo?.id == roteiroId) {
-      _roteiroAtivo = _roteiros[index];
+      _roteiroAtivo = roteiroAtualizado;
       // ignore: unawaited_futures
       calcularRota();
     }
 
     await _persistir();
+    _sincronizarRoteiro(roteiroAtualizado);
     notifyListeners();
     return true;
   }
