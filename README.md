@@ -156,7 +156,7 @@ A aplicação segue uma arquitetura em camadas:
 ### 1. Clonar o projeto
 
 ```bash
-git clone <url-do-repo>
+git clone <https://github.com/mariaduda2910/projeto_final.git>
 cd projeto_final_flutter
 ```
 
@@ -165,7 +165,7 @@ cd projeto_final_flutter
 Cria um ficheiro `.env` na raiz do projeto:
 
 ```env
-GEOAPIFY_API_KEY=a_tua_chave_geoapify
+GEOAPIFY_API_KEY=555f1e7ee9cb4908babba56e80d5c48e
 API_BASE_URL=http://localhost:3000
 ```
 
@@ -183,7 +183,7 @@ API_BASE_URL=http://localhost:3000
 flutter pub get
 ```
 
-### 4. Instalar o JSON Server (uma vez só)
+### 4. Instalar o JSON Server 
 
 ```bash
 npm install -g json-server
@@ -191,7 +191,7 @@ npm install -g json-server
 
 ---
 
-## ▶️ Como correr
+## Como correr
 
 ### Arrancar o backend local (JSON Server)
 
@@ -244,12 +244,13 @@ flutter devices
 ## 🗄️ Persistência e Sincronização
 
 ### Tecnologias usadas
-
-| Camada | Tecnologia | Propósito |
-|--------|-----------|-----------|
-| **Local (rápida)** | SharedPreferences | Dados do utilizador, fila de sync, favoritos, roteiros |
-| **Servidor "fake"** | JSON Server (`db.json`) | Simula sincronização cloud para partilha de dados |
-| **POIs externos** | Geoapify Places + Routing | Pontos de interesse e rotas reais |
+_____________________________________________________________________________________________________________
+| Camada               | Tecnologia                | Propósito                                              |
+|----------------------|---------------------------|--------------------------------------------------------|
+| **Local (rápida)**   | SharedPreferences         | Dados do utilizador, fila de sync, favoritos, roteiros |
+| **Servidor "fake"**  | JSON Server (`db.json`)   | Simula sincronização cloud para partilha de dados      |
+| **POIs externos**    | Geoapify Places + Routing | Pontos de interesse e rotas reais                      |
+-------------------------------------------------------------------------------------------------------------
 
 ### Como funciona a sincronização
 
@@ -260,22 +261,6 @@ flutter devices
 5. **Se está offline**: fica na fila persistente
 6. Quando o `connectivity_plus` deteta volta de internet → processa fila
 
-### Resolução de problemas
-
-**Port 3000 already in use:**
-```bash
-json-server --watch server/db.json --port 3001
-# Atualiza o API_BASE_URL no .env
-```
-
-**CORS error:** O `json-server` aceita CORS por defeito. Se acontecer, atualiza:
-```bash
-npm update -g json-server
-```
-
-**Cannot connect from Android:** usa `10.0.2.2` (emulador) ou o IP local do PC em vez de `localhost`.
-
----
 
 ## 📊 Modelo de Dados
 

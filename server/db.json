@@ -1,6 +1,76 @@
 {
-  "users": [],
-  "favoritos": [],
-  "roteiros": [],
+  "users": [
+    {
+      "id": "user_test_001",
+      "email": "teste@algarve.pt",
+      "password": "teste1234",
+      "nome": "Turista",
+      "data_registo": "2026-05-17T12:00:00Z",
+      "data_expiracao": "2026-05-24T12:00:00Z",
+      "idioma_preferido": "pt",
+      "is_ativo": true
+    }
+  ],
+  "favoritos": [
+    {
+      "id": "user_test_001_geoapify_camilo",
+      "userId": "user_test_001",
+      "poiId": "geoapify_camilo",
+      "nome": "Praia do Camilo",
+      "latitude": 37.0908,
+      "longitude": -8.6691,
+      "endereco": "Lagos, Algarve",
+      "categoria": "natural.beach",
+      "adicionado_em": "2026-05-17T12:01:00Z"
+    }
+  ],
+  "roteiros": [
+    {
+      "id": "roteiro_test_001",
+      "userId": "user_test_001",
+      "titulo": "Tour de Lagos",
+      "descricao": "Volta tur�stica pela cidade",
+      "data_inicio": "2026-05-18T00:00:00Z",
+      "data_fim": "2026-05-18T23:59:59Z",
+      "criado_em": "2026-05-17T12:05:00Z",
+      "ativo": true,
+      "partilhado": false,
+      "eventos": [
+        {
+          "id": "evt_1",
+          "poiId": "geoapify_camilo",
+          "poiNome": "Praia do Camilo",
+          "poiLatitude": 37.0908,
+          "poiLongitude": -8.6691,
+          "poiEndereco": "Lagos, Algarve",
+          "poiCategoria": "natural.beach",
+          "ordem": 1,
+          "visitado": false
+        },
+        {
+          "id": "evt_2",
+          "poiId": "geoapify_piedade",
+          "poiNome": "Ponta da Piedade",
+          "poiLatitude": 37.0808,
+          "poiLongitude": -8.6684,
+          "poiEndereco": "Lagos, Algarve",
+          "poiCategoria": "tourism.attraction",
+          "ordem": 2,
+          "visitado": false
+        },
+        {
+          "id": "evt_3",
+          "poiId": "geoapify_centro",
+          "poiNome": "Centro Hist�rico de Lagos",
+          "poiLatitude": 37.1028,
+          "poiLongitude": -8.6738,
+          "poiEndereco": "Lagos, Algarve",
+          "poiCategoria": "tourism.attraction",
+          "ordem": 3,
+          "visitado": false
+        }
+      ]
+    }
+  ],
   "rotasPartilhadas": []
 }
