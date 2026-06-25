@@ -1,5 +1,6 @@
 // lib/views/detail/detail_screen.dart — FUNCIONAL, SEM MOCK
 // Recebe PoiModel via arguments e busca detalhes completos da Geoapify
+import 'package:algarve_explorer/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -343,10 +344,11 @@ class _DetailScreenState extends State<DetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final poi = widget.poi;
     if (poi == null) {
-      return const Scaffold(
-        body: Center(child: Text('POI não encontrado')),
+      return Scaffold(
+        body: Center(child: Text(l10n.poiNotFound)),
       );
     }
 
@@ -472,7 +474,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   if (_poi.descricao.isNotEmpty && _poi.descricao != 'Sem descrição')
                     _buildSecao(
                       icon: Icons.description_outlined,
-                      title: 'Sobre',
+                      title: l10n.about,
                       child: Text(
                         _poi.descricao,
                         style: TextStyle(
@@ -485,7 +487,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   if (_poi.endereco != null)
                     _buildSecao(
                       icon: Icons.location_on_outlined,
-                      title: 'Endereço',
+                      title: l10n.address,
                       child: Text(
                         _poi.endereco!,
                         style: TextStyle(fontSize: 15, color: Colors.grey[700]),
@@ -494,7 +496,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   if (_poi.telefone != null || _poi.email != null || _poi.website != null)
                     _buildSecao(
                       icon: Icons.contact_phone_outlined,
-                      title: 'Contactos',
+                      title: l10n.contacts,
                       child: Wrap(
                         spacing: 8,
                         runSpacing: 8,
@@ -523,7 +525,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   if (_poi.horario != null)
                     _buildSecao(
                       icon: Icons.access_time,
-                      title: 'Horário',
+                      title: l10n.openingHours,
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -544,7 +546,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   if (_poi.cozinha != null)
                     _buildSecao(
                       icon: Icons.restaurant_menu,
-                      title: 'Cozinha',
+                      title: l10n.cuisine,
                       child: Wrap(
                         spacing: 8,
                         children: _poi.cozinha!
@@ -563,7 +565,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   const SizedBox(height: 24),
                   _buildSecao(
                     icon: Icons.map_outlined,
-                    title: 'Localização',
+                    title: l10n.location,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: SizedBox(

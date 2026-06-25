@@ -32,6 +32,57 @@ class AppLocalizationsDe extends AppLocalizations {
   String get createItinerary => 'Reiseroute erstellen';
 
   @override
+  String get viewItinerary => 'Reiseroute ansehen';
+
+  @override
+  String get allItineraries => 'Alle Reiserouten';
+
+  @override
+  String get noItinerariesYet => 'Sie haben noch keine Reiserouten';
+
+  @override
+  String get createFirstItineraryHint => 'Erstellen Sie Ihre erste Reiseroute, um die Algarve zu erkunden';
+
+  @override
+  String get tapHeartToSave => 'Tippen Sie auf das ♥ an einem Ort auf der Karte, um ihn zu speichern';
+
+  @override
+  String get allFavorites => 'Alle Favoriten';
+
+  @override
+  String get poiNotFound => 'POI nicht gefunden';
+
+  @override
+  String get about => 'Über';
+
+  @override
+  String get contacts => 'Kontakte';
+
+  @override
+  String get cuisine => 'Küche';
+
+  @override
+  String get location => 'Ort';
+
+  @override
+  String get discoverCoastalParadise => 'Entdecken Sie das Küstenparadies';
+
+  @override
+  String get featureInDevelopment => 'Funktion in Entwicklung';
+
+  @override
+  String get forgotPassword => 'Passwort vergessen?';
+
+  @override
+  String get noAccountYet => 'Sie haben noch kein Konto?';
+
+  @override
+  String get myItineraries => 'Meine Reiserouten';
+
+  @override
+  String get newItinerary => 'Neue Reiseroute';
+
+  @override
   String get itineraryTitle => 'Titel der Reiseroute';
 
   @override
@@ -39,6 +90,20 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get endDate => 'Enddatum';
+
+  @override
+  String get selectDate => 'Datum auswählen';
+
+  @override
+  String get fillAllFields => 'Bitte alle Felder ausfüllen';
+
+  @override
+  String firstStop(String poiName) {
+    return 'Erster Stopp: $poiName';
+  }
+
+  @override
+  String get itineraryCreatedSuccessfully => 'Reiseroute erfolgreich erstellt!';
 
   @override
   String get morning => 'Morgen';

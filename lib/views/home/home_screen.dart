@@ -1,6 +1,7 @@
 // lib/views/home/home_screen.dart — ATUALIZADO
 // Card de roteiro com botão "Criar Roteiro" quando vazio
 import 'package:algarve_explorer/models/itinerary_event_model.dart';
+import 'package:algarve_explorer/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -18,6 +19,8 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -27,15 +30,15 @@ class HomeScreen extends StatelessWidget {
             children: [
               // Header
               Text(
-                'Bem-vindo ao Algarve! 🌊',
+                l10n.welcomeMessage,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
                     ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Planeia a tua próxima aventura',
+              Text(
+                l10n.planNextAdventure,
                 style: TextStyle(color: AppColors.textSecondary),
               ),
 
@@ -77,6 +80,7 @@ class HomeScreen extends StatelessWidget {
 
   // ─── CARD COM ROTEIRO ATIVO ───
   Widget _buildRoteiroAtivoCard(BuildContext context, ItineraryModel roteiro) {
+    final l10n = AppLocalizations.of(context)!;
     final eventos = roteiro.eventos;
 
     return Card(
@@ -201,8 +205,8 @@ class HomeScreen extends StatelessWidget {
                         );
                       },
                       icon: const Icon(Icons.route, color: AppColors.primary, size: 18),
-                      label: const Text(
-                        'Ver Roteiro',
+                      label: Text(
+                        l10n.viewItinerary,
                         style: TextStyle(color: AppColors.primary),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -221,8 +225,8 @@ class HomeScreen extends StatelessWidget {
                         Navigator.pushNamed(context, '/itinerary/list');
                       },
                       icon: const Icon(Icons.list, color: Colors.white, size: 18),
-                      label: const Text(
-                        'Todos os Roteiros',
+                      label: Text(
+                        l10n.allItineraries,
                         style: TextStyle(color: Colors.white),
                       ),
                       style: OutlinedButton.styleFrom(
@@ -245,6 +249,8 @@ class HomeScreen extends StatelessWidget {
 
   // ─── CARD VAZIO COM BOTÃO CRIAR ───
   Widget _buildRoteiroVazioCard(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -273,8 +279,8 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Ainda não tens roteiros',
+              Text(
+                l10n.noItinerariesYet,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -282,7 +288,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Cria o teu primeiro roteiro para explorar o Algarve',
+                l10n.createFirstItineraryHint,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -302,7 +308,7 @@ class HomeScreen extends StatelessWidget {
                     );
                   },
                   icon: const Icon(Icons.add),
-                  label: const Text('Criar Roteiro'),
+                  label: Text(l10n.createItinerary),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
@@ -372,6 +378,8 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildFavoritosRapidos(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Consumer<FavoritesProvider>(
       builder: (context, favProvider, _) {
         final favoritos = favProvider.favoritos;
@@ -381,14 +389,14 @@ class HomeScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Favoritos Recentes',
+                Text(
+                  l10n.recentFavorites,
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                 ),
                 if (favoritos.isNotEmpty)
                   TextButton(
                     onPressed: () => _mostrarTodosFavoritos(context, favProvider),
-                    child: const Text('Ver todos'),
+                    child: Text(l10n.seeAll),
                   ),
               ],
             ),
@@ -407,12 +415,12 @@ class HomeScreen extends StatelessWidget {
                         color: Colors.grey[400], size: 36),
                     const SizedBox(height: 8),
                     Text(
-                      'Ainda não tens favoritos',
+                      l10n.noFavoritesYet,
                       style: TextStyle(color: Colors.grey[600]),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Toca no ♥ de um local no mapa para guardar',
+                      l10n.tapHeartToSave,
                       style: TextStyle(
                           fontSize: 12, color: Colors.grey[500]),
                       textAlign: TextAlign.center,
@@ -436,6 +444,8 @@ class HomeScreen extends StatelessWidget {
   }
 
   void _mostrarTodosFavoritos(BuildContext context, FavoritesProvider provider) {
+    final l10n = AppLocalizations.of(context)!;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -465,7 +475,7 @@ class HomeScreen extends StatelessWidget {
                   const Icon(Icons.favorite, color: Colors.red),
                   const SizedBox(width: 8),
                   Text(
-                    'Todos os Favoritos (${provider.favoritos.length})',
+                    '${l10n.allFavorites} (${provider.favoritos.length})',
                     style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.bold),
                   ),
@@ -570,6 +580,8 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildMerchandising(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -579,15 +591,15 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Merchandising',
+          Text(
+            l10n.merchandising,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
           Container(
             height: 150,
             color: Colors.grey[300],
-            child: const Center(child: Text('Em breve...')),
+            child: Center(child: Text(l10n.comingSoon)),
           ),
         ],
       ),

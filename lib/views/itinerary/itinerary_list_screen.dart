@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../l10n/app_localizations.dart';
 import '../../core/utils/helpers.dart';
 import '../../models/poi_model.dart';
 import '../../models/itinerary_model.dart';
@@ -31,6 +32,7 @@ class _ItineraryListScreenState extends State<ItineraryListScreen> {
   }
 
   void _mostrarDialogCriarRoteiro({PoiModel? poiInicial}) { // Permite pré-selecionar um POI para o novo roteiro, se vier da tela de detalhes de um POI
+    final l10n = AppLocalizations.of(context)!;
     final tituloCtrl = TextEditingController();
     DateTime? dataInicio;
     DateTime? dataFim; 
@@ -57,10 +59,10 @@ class _ItineraryListScreenState extends State<ItineraryListScreen> {
                     child: const Icon(Icons.map, color: AppColors.primary),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Novo Roteiro',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      l10n.newItinerary,
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -71,10 +73,10 @@ class _ItineraryListScreenState extends State<ItineraryListScreen> {
                   children: [
                     TextField(
                       controller: tituloCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Nome do roteiro',
+                      decoration: InputDecoration(
+                        labelText: l10n.itineraryTitle,
                         hintText: 'Ex: Fim de semana em Lagos',
-                        prefixIcon: Icon(Icons.edit),
+                        prefixIcon: const Icon(Icons.edit),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -101,14 +103,14 @@ class _ItineraryListScreenState extends State<ItineraryListScreen> {
                         }
                       },
                       child: InputDecorator(
-                        decoration: const InputDecoration(
-                          labelText: 'Data de início',
-                          prefixIcon: Icon(Icons.calendar_today),
+                        decoration: InputDecoration(
+                          labelText: l10n.startDate,
+                          prefixIcon: const Icon(Icons.calendar_today),
                         ),
                         child: Text(
                           dataInicio != null
                               ? Helpers.formatarData(dataInicio!)
-                              : 'Selecionar data',
+                              : l10n.selectDate,
                           style: TextStyle(
                             color: dataInicio != null ? Colors.black : Colors.grey,
                           ),
@@ -139,14 +141,14 @@ class _ItineraryListScreenState extends State<ItineraryListScreen> {
                         }
                       },
                       child: InputDecorator(
-                        decoration: const InputDecoration(
-                          labelText: 'Data de fim',
-                          prefixIcon: Icon(Icons.calendar_today),
+                        decoration: InputDecoration(
+                          labelText: l10n.endDate,
+                          prefixIcon: const Icon(Icons.calendar_today),
                         ),
                         child: Text(
                           dataFim != null
                               ? Helpers.formatarData(dataFim!)
-                              : 'Selecionar data',
+                              : l10n.selectDate,
                           style: TextStyle(
                             color: dataFim != null ? Colors.black : Colors.grey,
                           ),
@@ -168,7 +170,7 @@ class _ItineraryListScreenState extends State<ItineraryListScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Primeira paragem: ${poiInicial.nome}',
+                                l10n.firstStop(poiInicial.nome),
                                 style: const TextStyle(
                                   fontSize: 13,
                                   color: AppColors.accent,
@@ -186,14 +188,14 @@ class _ItineraryListScreenState extends State<ItineraryListScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancelar'),
+                  child: Text(l10n.cancel),
                 ),
                 ElevatedButton(
                   onPressed: () async {
                     if (tituloCtrl.text.trim().isEmpty || dataInicio == null || dataFim == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Preenche todos os campos'),
+                        SnackBar(
+                          content: Text(l10n.fillAllFields),
                           backgroundColor: AppColors.error,
                         ),
                       );
@@ -230,15 +232,15 @@ class _ItineraryListScreenState extends State<ItineraryListScreen> {
                       if (!mounted) return;
                       navigator.pop();
                       messenger.showSnackBar(
-                        const SnackBar(
-                          content: Text('Roteiro criado com sucesso!'),
+                        SnackBar(
+                          content: Text(l10n.itineraryCreatedSuccessfully),
                           backgroundColor: AppColors.success,
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
                     }
                   },
-                  child: const Text('Criar'),
+                  child: Text(l10n.createItinerary),
                 ),
               ],
             );
@@ -483,13 +485,15 @@ class _ItineraryListScreenState extends State<ItineraryListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Consumer<ItineraryProvider>(
       builder: (context, provider, _) {
         final roteiros = provider.roteiros;
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Os Meus Roteiros'),
+            title: Text(l10n.myItineraries),
             centerTitle: true,
             elevation: 0,
             backgroundColor: Colors.transparent,
@@ -509,7 +513,7 @@ class _ItineraryListScreenState extends State<ItineraryListScreen> {
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () => _mostrarDialogCriarRoteiro(),
             icon: const Icon(Icons.add),
-            label: const Text('Novo Roteiro'),
+            label: Text(l10n.newItinerary),
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
           ),
@@ -519,6 +523,8 @@ class _ItineraryListScreenState extends State<ItineraryListScreen> {
   }
 
   Widget _buildEstadoVazio() {
+    final l10n = AppLocalizations.of(context)!;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
@@ -539,8 +545,8 @@ class _ItineraryListScreenState extends State<ItineraryListScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Ainda não tens roteiros',
+            Text(
+              l10n.noItinerariesYet,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -548,7 +554,7 @@ class _ItineraryListScreenState extends State<ItineraryListScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Cria o teu primeiro roteiro para começar a explorar o Algarve',
+              l10n.createFirstItineraryHint,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 15,
@@ -559,7 +565,7 @@ class _ItineraryListScreenState extends State<ItineraryListScreen> {
             ElevatedButton.icon(
               onPressed: () => _mostrarDialogCriarRoteiro(),
               icon: const Icon(Icons.add),
-              label: const Text('Criar Roteiro'),
+              label: Text(l10n.createItinerary),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,

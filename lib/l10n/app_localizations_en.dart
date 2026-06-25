@@ -32,6 +32,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createItinerary => 'Create Itinerary';
 
   @override
+  String get viewItinerary => 'View itinerary';
+
+  @override
+  String get allItineraries => 'All itineraries';
+
+  @override
+  String get noItinerariesYet => 'You have no itineraries yet';
+
+  @override
+  String get createFirstItineraryHint => 'Create your first itinerary to explore the Algarve';
+
+  @override
+  String get tapHeartToSave => 'Tap the ♥ on a place on the map to save it';
+
+  @override
+  String get allFavorites => 'All favorites';
+
+  @override
+  String get poiNotFound => 'POI not found';
+
+  @override
+  String get about => 'About';
+
+  @override
+  String get contacts => 'Contacts';
+
+  @override
+  String get cuisine => 'Cuisine';
+
+  @override
+  String get location => 'Location';
+
+  @override
+  String get discoverCoastalParadise => 'Discover the coastal paradise';
+
+  @override
+  String get featureInDevelopment => 'Feature under development';
+
+  @override
+  String get forgotPassword => 'Forgot your password?';
+
+  @override
+  String get noAccountYet => 'Don\'t have an account yet?';
+
+  @override
+  String get myItineraries => 'My itineraries';
+
+  @override
+  String get newItinerary => 'New itinerary';
+
+  @override
   String get itineraryTitle => 'Itinerary title';
 
   @override
@@ -39,6 +90,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get endDate => 'End date';
+
+  @override
+  String get selectDate => 'Select date';
+
+  @override
+  String get fillAllFields => 'Please fill in all fields';
+
+  @override
+  String firstStop(String poiName) {
+    return 'First stop: $poiName';
+  }
+
+  @override
+  String get itineraryCreatedSuccessfully => 'Itinerary created successfully!';
 
   @override
   String get morning => 'Morning';

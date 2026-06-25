@@ -30,7 +30,56 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get createItinerary => 'Créer un Itinéraire';
+  @override
+  String get viewItinerary => 'Voir l\'itinéraire';
 
+  @override
+  String get allItineraries => 'Tous les itinéraires';
+
+  @override
+  String get noItinerariesYet => 'Vous n\'avez pas encore d\'itinéraires';
+
+  @override
+  String get createFirstItineraryHint => 'Créez votre premier itinéraire pour explorer l\'Algarve';
+
+  @override
+  String get tapHeartToSave => 'Appuyez sur le ♥ sur un lieu sur la carte pour l\'enregistrer';
+
+  @override
+  String get allFavorites => 'Tous les favoris';
+
+  @override
+  String get poiNotFound => 'POI introuvable';
+
+  @override
+  String get about => 'À propos';
+
+  @override
+  String get contacts => 'Contacts';
+
+  @override
+  String get cuisine => 'Cuisine';
+
+  @override
+  String get location => 'Emplacement';
+
+  @override
+  String get discoverCoastalParadise => 'Découvrez le paradis côtier';
+
+  @override
+  String get featureInDevelopment => 'Fonctionnalité en cours de développement';
+
+  @override
+  String get forgotPassword => 'Mot de passe oublié ?';
+
+  @override
+  String get noAccountYet => 'Vous n\'avez pas encore de compte ?';
+
+  @override
+  String get myItineraries => 'Mes itinéraires';
+
+  @override
+  String get newItinerary => 'Nouvel itinéraire';
   @override
   String get itineraryTitle => 'Titre de l\'itinéraire';
 
@@ -39,6 +88,20 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get endDate => 'Date de fin';
+
+  @override
+  String get selectDate => 'Sélectionner une date';
+
+  @override
+  String get fillAllFields => 'Remplis tous les champs';
+
+  @override
+  String firstStop(String poiName) {
+    return 'Première étape : $poiName';
+  }
+
+  @override
+  String get itineraryCreatedSuccessfully => 'Itinéraire créé avec succès !';
 
   @override
   String get morning => 'Matin';

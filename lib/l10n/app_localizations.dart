@@ -125,6 +125,57 @@ abstract class AppLocalizations {
   /// **'My Itinerary'**
   String get myItinerary;
 
+  /// No description provided for @viewItinerary.
+  String get viewItinerary;
+
+  /// No description provided for @allItineraries.
+  String get allItineraries;
+
+  /// No description provided for @noItinerariesYet.
+  String get noItinerariesYet;
+
+  /// No description provided for @createFirstItineraryHint.
+  String get createFirstItineraryHint;
+
+  /// No description provided for @tapHeartToSave.
+  String get tapHeartToSave;
+
+  /// No description provided for @allFavorites.
+  String get allFavorites;
+
+  /// No description provided for @poiNotFound.
+  String get poiNotFound;
+
+  /// No description provided for @about.
+  String get about;
+
+  /// No description provided for @contacts.
+  String get contacts;
+
+  /// No description provided for @cuisine.
+  String get cuisine;
+
+  /// No description provided for @location.
+  String get location;
+
+  /// No description provided for @discoverCoastalParadise.
+  String get discoverCoastalParadise;
+
+  /// No description provided for @featureInDevelopment.
+  String get featureInDevelopment;
+
+  /// No description provided for @forgotPassword.
+  String get forgotPassword;
+
+  /// No description provided for @noAccountYet.
+  String get noAccountYet;
+
+  /// No description provided for @myItineraries.
+  String get myItineraries;
+
+  /// No description provided for @newItinerary.
+  String get newItinerary;
+
   /// No description provided for @stopsCount.
   ///
   /// In en, this message translates to:
@@ -160,6 +211,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'End date'**
   String get endDate;
+
+  /// No description provided for @selectDate.
+  String get selectDate;
+
+  /// No description provided for @fillAllFields.
+  String get fillAllFields;
+
+  /// No description provided for @firstStop.
+  String firstStop(String poiName);
+
+  /// No description provided for @itineraryCreatedSuccessfully.
+  String get itineraryCreatedSuccessfully;
 
   /// No description provided for @morning.
   ///

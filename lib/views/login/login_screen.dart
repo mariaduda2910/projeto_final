@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
+import '../../l10n/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 import 'register_modal.dart';
 
@@ -96,6 +97,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -137,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen>
 
                       // ✨ SUBTÍTULO
                       Text(
-                        'Descubra o paraíso costeiro',
+                        l10n.discoverCoastalParadise,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               color: AppColors.textSecondary,
                               letterSpacing: 0.3,
@@ -149,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen>
                       // 📧 CAMPO EMAIL
                       _buildInputField(
                         controller: _emailController,
-                        label: 'Email',
+                        label: l10n.email,
                         hint: 'seu@email.com',
                         isFocused: _focusedField == 'email',
                         onFocusChange: (isFocused) {
@@ -174,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen>
                       // 🔒 CAMPO PASSWORD
                       _buildInputField(
                         controller: _passwordController,
-                        label: 'Palavra-passe',
+                        label: l10n.password,
                         hint: '••••••••',
                         isFocused: _focusedField == 'password',
                         onFocusChange: (isFocused) {
@@ -199,14 +201,13 @@ class _LoginScreenState extends State<LoginScreen>
                         child: TextButton(
                           onPressed: () {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content:
-                                    Text('Funcionalidade em desenvolvimento'),
+                              SnackBar(
+                                content: Text(l10n.featureInDevelopment),
                               ),
                             );
                           },
                           child: Text(
-                            'Esqueci-me da palavra-passe',
+                            l10n.forgotPassword,
                             style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 13,
@@ -251,7 +252,7 @@ class _LoginScreenState extends State<LoginScreen>
                         width: double.infinity,
                         height: 56,
                         child: _buildGradientButton(
-                          text: 'Entrar',
+                          text: l10n.login,
                           isLoading: auth.isLoading,
                           onPressed: _fazerLogin,
                         ),
@@ -264,7 +265,7 @@ class _LoginScreenState extends State<LoginScreen>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Ainda não tem conta? ',
+                            '${l10n.noAccountYet} ',
                             style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 13,
@@ -283,7 +284,7 @@ class _LoginScreenState extends State<LoginScreen>
                               );
                             },
                             child: Text(
-                              'Criar conta',
+                              l10n.createAccount,
                               style: TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w600,
