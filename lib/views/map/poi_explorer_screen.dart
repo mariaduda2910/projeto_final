@@ -14,6 +14,7 @@ import '../../services/geoapify_service.dart';
 import '../../widgets/itinerary/active_itinerary_picker.dart';
 import '../../widgets/itinerary/add_pois_to_itinerary_sheet.dart';
 import '../../widgets/map/active_route_info.dart';
+import '../../widgets/map/poi_category_ui.dart';
 import '../../widgets/poi_marker.dart';
 
 /// Página do Mapa - Algarve Explorer v2.0
@@ -23,52 +24,6 @@ class PoiExplorerScreen extends StatefulWidget {
   @override
   State<PoiExplorerScreen> createState() => _PoiExplorerScreenState();
 }
-
-// ═══════════════════════════════════════════════════════════════════
-// CONFIGURAÇÃO DE CORES POR CATEGORIA
-// ═══════════════════════════════════════════════════════════════════
-
-class _CategoriaUI {
-  final String label;
-  final IconData icon;
-  final Color cor;
-  const _CategoriaUI(this.label, this.icon, this.cor);
-}
-
-final Map<String, _CategoriaUI> _categoriaUI = {
-  'catering.restaurant':
-      const _CategoriaUI('Restaurantes', Icons.restaurant, Color(0xFFFF6B6B)),
-  'catering.cafe':
-      const _CategoriaUI('Cafés', Icons.local_cafe, Color(0xFFFFB347)),
-  'catering.bar':
-      const _CategoriaUI('Bares', Icons.local_bar, Color(0xFFAA96DA)),
-  'accommodation.hotel':
-      const _CategoriaUI('Hotéis', Icons.hotel, Color(0xFF4ECDC4)),
-  'tourism.attraction':
-      const _CategoriaUI('Atrações', Icons.attractions, Color(0xFFF38181)),
-  'entertainment.museum':
-      const _CategoriaUI('Museus', Icons.museum, Color(0xFF95E1D3)),
-  'commercial.supermarket': const _CategoriaUI(
-      'Supermercados', Icons.shopping_cart, Color(0xFF74B9FF)),
-  'healthcare.pharmacy':
-      const _CategoriaUI('Farmácias', Icons.local_pharmacy, Color(0xFFFD79A8)),
-  'natural.beach':
-      const _CategoriaUI('Praias', Icons.beach_access, Color(0xFFFFD93D)),
-  'leisure.park': const _CategoriaUI('Parques', Icons.park, Color(0xFF55EFC4)),
-};
-
-final List<String> _categoriasDisponiveis = [
-  'catering.restaurant',
-  'catering.cafe',
-  'catering.bar',
-  'accommodation.hotel',
-  'tourism.attraction',
-  'entertainment.museum',
-  'commercial.supermarket',
-  'healthcare.pharmacy',
-  'natural.beach',
-  'leisure.park',
-];
 
 // ═══════════════════════════════════════════════════════════════════
 // ESTADO
@@ -86,8 +41,8 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
   bool _loadingPois = false;
   String? _error;
 
-  int _radius = 10000;
-  int _limit = 50;
+final int _radius = 10000;
+final int _limit = 50;
 
   final Set<String> _selectedCategories = {};
   bool _soAbertos = false;
@@ -226,7 +181,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
 
     try {
       final categoriasParaBuscar = _selectedCategories.isEmpty
-          ? _categoriasDisponiveis
+          ? poiCategoriesDisponiveis
           : _selectedCategories.toList();
 
       final resultados = await _geoapifyService.buscarLocaisProximos(
@@ -246,10 +201,6 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
         _loadingPois = false;
       });
 
-      print('POIs fetched: ${resultados.length}');
-      for (var poi in resultados) {
-        print('  - ${poi.nome}: ${poi.categoriaPrincipal}');
-      }
     } catch (e) {
       setState(() {
         _error = 'Erro ao procurar locais: $e';
@@ -399,35 +350,8 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
   }
 
   // NOVO helper para encontrar categoria:
-  _CategoriaUI _getCategoriaUI(PoiModel poi) {
-    final cat = poi.categoriaPrincipal?.toLowerCase() ?? '';
-
-    // Mapeamento direto das categorias da API Geoapify
-    if (cat == 'tourism') return _categoriaUI['tourism.attraction']!;
-    if (cat == 'catering') return _categoriaUI['catering.restaurant']!;
-    if (cat == 'commercial') return _categoriaUI['commercial.supermarket']!;
-    if (cat == 'entertainment') return _categoriaUI['entertainment.museum']!;
-    if (cat == 'natural') return _categoriaUI['natural.beach']!;
-    if (cat == 'leisure') return _categoriaUI['leisure.park']!;
-    if (cat == 'accommodation') return _categoriaUI['accommodation.hotel']!;
-    if (cat == 'healthcare') return _categoriaUI['healthcare.pharmacy']!;
-
-    // Fallback para substrings (para subcategorias como catering.restaurant)
-    if (cat.contains('restaurant')) return _categoriaUI['catering.restaurant']!;
-    if (cat.contains('cafe')) return _categoriaUI['catering.cafe']!;
-    if (cat.contains('bar')) return _categoriaUI['catering.bar']!;
-    if (cat.contains('hotel')) return _categoriaUI['accommodation.hotel']!;
-    if (cat.contains('attraction') || cat.contains('tourism'))
-      return _categoriaUI['tourism.attraction']!;
-    if (cat.contains('museum')) return _categoriaUI['entertainment.museum']!;
-    if (cat.contains('supermarket') || cat.contains('commercial'))
-      return _categoriaUI['commercial.supermarket']!;
-    if (cat.contains('pharmacy')) return _categoriaUI['healthcare.pharmacy']!;
-    if (cat.contains('beach')) return _categoriaUI['natural.beach']!;
-    if (cat.contains('park')) return _categoriaUI['leisure.park']!;
-
-    // Fallback
-    return const _CategoriaUI('Local', Icons.place, AppColors.primary);
+  PoiCategoryUi _getCategoriaUI(PoiModel poi) {
+    return resolvePoiCategoryUi(poi.categoriaPrincipal);
   }
   // ═══════════════════════════════════════════════════════════════════
   // BUILD PRINCIPAL
@@ -573,7 +497,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -611,36 +535,42 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
 
   Widget _buildErroState() {
     return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  shape: BoxShape.circle,
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 88,
+                  height: 88,
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.error_outline, size: 42, color: Colors.red),
                 ),
-                child: const Icon(Icons.error_outline,
-                    size: 40, color: Colors.red),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                _error!,
-                textAlign: TextAlign.center,
-                style:
-                    const TextStyle(fontSize: 16, color: AppColors.textPrimary),
-              ),
-              const SizedBox(height: 24),
-              _buildGradientButton(
-                text: 'Tentar novamente',
-                icon: Icons.refresh,
-                onPressed: _carregarDadosIniciais,
-              ),
-            ],
+                const SizedBox(height: 16),
+                const Text(
+                  'Não foi possível carregar o mapa',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _error ?? 'Verifica a tua ligação ou tenta novamente.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 24),
+                _buildGradientButton(
+                  text: 'Tentar novamente',
+                  icon: Icons.refresh,
+                  onPressed: _carregarDadosIniciais,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -924,7 +854,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                         color: (isSelecionadoParaRoteiro
                                 ? AppColors.primary
                                 : ui.cor)
-                            .withOpacity(0.4),
+                            .withValues(alpha: 0.4),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       ),
@@ -965,7 +895,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
 
   Widget _buildFiltrosComToggle() {
     return Container(
-      color: Colors.white.withValues(alpha:0.95),
+      color: Colors.white.withValues(alpha: 0.95),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -982,9 +912,11 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                     _pesquisarPois();
                   },
                 ),
-                const Text(
-                  'Só abertos agora',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                const Expanded(
+                  child: Text(
+                    'Só abertos agora',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                  ),
                 ),
               ],
             ),
@@ -996,11 +928,11 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _categoriasDisponiveis.length,
+              itemCount: poiCategoriesDisponiveis.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
-                final categoria = _categoriasDisponiveis[index];
-                final ui = _categoriaUI[categoria]!;
+                final categoria = poiCategoriesDisponiveis[index];
+                final ui = poiCategoryUi[categoria]!;
                 final isSelected = _selectedCategories.contains(categoria);
 
                 return FilterChip(
@@ -1021,9 +953,9 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                     ),
                   ),
                   selectedColor: ui.cor,
-                  backgroundColor: ui.cor.withOpacity(0.1),
+                  backgroundColor: ui.cor.withValues(alpha: 0.1),
                   side: BorderSide(
-                    color: isSelected ? ui.cor : ui.cor.withOpacity(0.3),
+                    color: isSelected ? ui.cor : ui.cor.withValues(alpha: 0.3),
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
@@ -1057,7 +989,7 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, -4),
               ),
@@ -1128,16 +1060,33 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
 
   Widget _buildListaVazia() {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.search_off, size: 48, color: Colors.grey[400]),
-          const SizedBox(height: 12),
-          Text(
-            'Nenhum local encontrado',
-            style: TextStyle(color: Colors.grey[600]),
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.search_off, size: 36, color: AppColors.primary),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Nenhum local encontrado',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Tenta ajustar os filtros ou voltar a procurar mais tarde.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1148,8 +1097,8 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
 
     // Lógica para destacar POIs sem horário quando filtro "só abertos" está ativo
     final deveDestacarVermelho = _soAbertos && !_estaAberto(poi);
-    final corCard = deveDestacarVermelho ? Colors.red.withOpacity(0.1) : Colors.white;
-    final corBorda = deveDestacarVermelho ? Colors.red.withOpacity(0.3) : Colors.transparent;
+    final corCard = deveDestacarVermelho ? Colors.red.withValues(alpha: 0.1) : Colors.white;
+    final corBorda = deveDestacarVermelho ? Colors.red.withValues(alpha: 0.3) : Colors.transparent;
 
     return Card(
       elevation: 2,
@@ -1207,8 +1156,8 @@ class _PoiExplorerScreenState extends State<PoiExplorerScreen>
                           ),
                           decoration: BoxDecoration(
                             color: deveDestacarVermelho
-                                ? Colors.red.withOpacity(0.15)
-                                : ui.cor.withOpacity(0.15),
+                                ? Colors.red.withValues(alpha: 0.15)
+                                : ui.cor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Text(

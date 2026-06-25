@@ -201,6 +201,9 @@ class _ItineraryListScreenState extends State<ItineraryListScreen> {
                     }
 
                     final provider = context.read<ItineraryProvider>();
+                    final messenger = ScaffoldMessenger.of(context);
+                    final navigator = Navigator.of(context);
+
                     await provider.criarRoteiro(
                       titulo: tituloCtrl.text.trim(),
                       dataInicio: dataInicio!,
@@ -224,8 +227,9 @@ class _ItineraryListScreenState extends State<ItineraryListScreen> {
                         }
                       }
 
-                      Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      if (!mounted) return;
+                      navigator.pop();
+                      messenger.showSnackBar(
                         const SnackBar(
                           content: Text('Roteiro criado com sucesso!'),
                           backgroundColor: AppColors.success,
@@ -254,7 +258,7 @@ class _ItineraryListScreenState extends State<ItineraryListScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: isAtivo
-            ? BorderSide(color: AppColors.primary.withOpacity(0.5), width: 2)
+            ? BorderSide(color: AppColors.primary.withValues(alpha: 0.5), width: 2)
             : BorderSide.none,
       ),
       child: InkWell(

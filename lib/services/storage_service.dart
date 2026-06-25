@@ -22,6 +22,7 @@ class StorageService {
   static const String _keyRoteiros = 'USER_ITINERARIES';
   static const String _keyRoteiroAtivo = 'ACTIVE_ITINERARY_ID';
   static const String _keyFavoritos = 'USER_FAVORITES';
+  static const String _keyIdioma = 'APP_LANGUAGE';
 
   /// Inicializa o service. Chamar no main.dart antes de correr a app.
   Future<void> init() async {
@@ -149,6 +150,12 @@ class StorageService {
   Future<void> guardarUltimaLocalizacao(double lat, double lng) async {
     await _prefs?.setString(AppConstants.keyLastLocation, '$lat,$lng');
   }
+
+  Future<void> guardarIdioma(String localeCode) async {
+    await _prefs?.setString(_keyIdioma, localeCode);
+  }
+
+  String? obterIdioma() => _prefs?.getString(_keyIdioma);
 
   // ─── Reset ──────────────────────────────────────────────────────────────────
 

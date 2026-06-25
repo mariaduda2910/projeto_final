@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:algarve_explorer/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'models/user_model.dart';
+import 'providers/app_settings_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/favorites_provider.dart';
 import 'providers/itinerary_provider.dart';
@@ -28,23 +31,36 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PoiProvider()),
         ChangeNotifierProvider(create: (_) => ItineraryProvider()),
         ChangeNotifierProvider(create: (_) => FavoritesProvider()),
+        ChangeNotifierProvider(create: (_) => AppSettingsProvider()..loadPreferences()),
       ],
-      child: MaterialApp(
-        title: 'Algarve Explorer',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
+      child: Consumer<AppSettingsProvider>(
+        builder: (context, settings, _) {
+          return MaterialApp(
+            title: 'Algarve Explorer',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            locale: settings.locale,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
         // Sessão válida → vai direto para o shell (com tabs Início/Mapa/Perfil)
         // Sem sessão → vai para o login
-        initialRoute: temSessao ? '/shell' : AppRoutes.login,
-        routes: {
-          '/shell': (context) => const ShellLayout(),
-          ...AppRoutes.routes,
-        },
-        onUnknownRoute: (settings) {
-          return MaterialPageRoute(
-            builder: (context) => const Scaffold(
-              body: Center(child: Text('Página não encontrada')),
-            ),
+            initialRoute: temSessao ? '/shell' : AppRoutes.login,
+            routes: {
+              '/shell': (context) => const ShellLayout(),
+              ...AppRoutes.routes,
+            },
+            onUnknownRoute: (settings) {
+              return MaterialPageRoute(
+                builder: (context) => const Scaffold(
+                  body: Center(child: Text('Página não encontrada')),
+                ),
+              );
+            },
           );
         },
       ),

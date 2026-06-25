@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:algarve_explorer/l10n/app_localizations.dart';
 import '../../core/constants/app_constants.dart';
+import '../../providers/app_settings_provider.dart';
 import '../../providers/auth_provider.dart';
 
 /// Modal de Registro - "Criar Conta"
@@ -25,6 +27,7 @@ class _RegisterModalState extends State<RegisterModal>
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  String _idiomaSelecionado = 'pt';
 
   // Estado de foco dos campos para animação de sombra
   String? _focusedField;
@@ -95,6 +98,7 @@ class _RegisterModalState extends State<RegisterModal>
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final auth = context.read<AuthProvider>();
+    await context.read<AppSettingsProvider>().setLocale(_idiomaSelecionado);
     final sucesso = await auth.registar(
       _emailController.text.trim(),
       _passwordController.text,
@@ -127,6 +131,8 @@ class _RegisterModalState extends State<RegisterModal>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20),
@@ -178,7 +184,7 @@ class _RegisterModalState extends State<RegisterModal>
 
                       // 📋 TÍTULO
                       Text(
-                        'Criar Conta',
+                        l10n.createAccount,
                         style:
                             Theme.of(context).textTheme.headlineSmall?.copyWith(
                                   color: AppColors.primary,
@@ -190,7 +196,7 @@ class _RegisterModalState extends State<RegisterModal>
 
                       // 📝 SUBTÍTULO
                       Text(
-                        'Junte-se à comunidade Algarve Explorer',
+                        l10n.joinCommunity,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: AppColors.textSecondary,
                             ),
@@ -205,9 +211,9 @@ class _RegisterModalState extends State<RegisterModal>
                         child: OutlinedButton.icon(
                           onPressed: _handleGitHubLogin,
                           icon: const Icon(Icons.code, size: 20),
-                          label: const Text(
-                            'Continuar com GitHub',
-                            style: TextStyle(
+                          label: Text(
+                            l10n.continueWithGitHub,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
@@ -239,7 +245,7 @@ class _RegisterModalState extends State<RegisterModal>
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             child: Text(
-                              'ou',
+                              l10n.or,
                               style: TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 13,
@@ -260,7 +266,7 @@ class _RegisterModalState extends State<RegisterModal>
                       // 📧 CAMPO EMAIL
                       _buildInputField(
                         controller: _emailController,
-                        label: 'Email',
+                        label: l10n.email,
                         hint: 'seu@email.com',
                         isFocused: _focusedField == 'email',
                         onFocusChange: (isFocused) {
@@ -285,8 +291,8 @@ class _RegisterModalState extends State<RegisterModal>
                       // 🔒 CAMPO PASSWORD (Mínimo 8 caracteres)
                       _buildInputField(
                         controller: _passwordController,
-                        label: 'Palavra-passe',
-                        hint: 'Mínimo 8 caracteres',
+                        label: l10n.password,
+                        hint: l10n.passwordHint,
                         isFocused: _focusedField == 'password',
                         onFocusChange: (isFocused) {
                           setState(() {
@@ -302,8 +308,8 @@ class _RegisterModalState extends State<RegisterModal>
                       // 🔒 CAMPO CONFIRMAR PASSWORD
                       _buildInputField(
                         controller: _confirmPasswordController,
-                        label: 'Confirmar palavra-passe',
-                        hint: 'Confirme a palavra-passe',
+                        label: l10n.confirmPassword,
+                        hint: l10n.confirmPasswordHint,
                         isFocused: _focusedField == 'confirmPassword',
                         onFocusChange: (isFocused) {
                           setState(() {
@@ -315,6 +321,42 @@ class _RegisterModalState extends State<RegisterModal>
                         validator: _validateConfirmPassword,
                       ),
 
+                      const SizedBox(height: 16),
+
+                      Text(
+                        l10n.appLanguage,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _idiomaSelecionado,
+                            isExpanded: true,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            items: const [
+                              DropdownMenuItem(value: 'pt', child: Text('Português')),
+                              DropdownMenuItem(value: 'en', child: Text('English')),
+                              DropdownMenuItem(value: 'fr', child: Text('Français')),
+                              DropdownMenuItem(value: 'es', child: Text('Español')),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() => _idiomaSelecionado = value);
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+
                       const SizedBox(height: 32),
 
                       // 🚀 BOTÃO CRIAR CONTA
@@ -322,7 +364,7 @@ class _RegisterModalState extends State<RegisterModal>
                         width: double.infinity,
                         height: 56,
                         child: _buildGradientButton(
-                          text: 'Criar Conta',
+                          text: l10n.createAccount,
                           onPressed: () => _handleCreateAccount(),
                         ),
                       ),
@@ -333,14 +375,14 @@ class _RegisterModalState extends State<RegisterModal>
                       Center(
                         child: RichText(
                           text: TextSpan(
-                            text: 'Já tem conta? ',
+                            text: '${l10n.alreadyHaveAccount} ',
                             style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 13,
                             ),
                             children: [
                               TextSpan(
-                                text: 'Faça login',
+                                text: l10n.login,
                                 style: const TextStyle(
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.w600,

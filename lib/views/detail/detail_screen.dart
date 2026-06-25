@@ -96,7 +96,9 @@ class _DetailScreenState extends State<DetailScreen> {
     final url = Uri.parse(
       'https://www.google.com/maps/dir/?api=1&destination=${_poi.latitude},${_poi.longitude}',
     );
+    if (!mounted) return;
     if (await canLaunchUrl(url)) {
+      if (!mounted) return;
       await launchUrl(url, mode: LaunchMode.externalApplication);
     }
   }
@@ -105,7 +107,9 @@ class _DetailScreenState extends State<DetailScreen> {
     final url = Uri.parse(
       'https://waze.com/ul?ll=${_poi.latitude},${_poi.longitude}&navigate=yes',
     );
+    if (!mounted) return;
     if (await canLaunchUrl(url)) {
+      if (!mounted) return;
       await launchUrl(url, mode: LaunchMode.externalApplication);
     }
   }
@@ -113,7 +117,9 @@ class _DetailScreenState extends State<DetailScreen> {
   Future<void> _abrirTelefone() async {
     if (_poi.telefone == null) return;
     final url = Uri.parse('tel:${_poi.telefone}');
+    if (!mounted) return;
     if (await canLaunchUrl(url)) {
+      if (!mounted) return;
       await launchUrl(url);
     }
   }
@@ -121,7 +127,9 @@ class _DetailScreenState extends State<DetailScreen> {
   Future<void> _abrirWebsite() async {
     if (_poi.website == null) return;
     final url = Uri.parse(_poi.website!);
+    if (!mounted) return;
     if (await canLaunchUrl(url)) {
+      if (!mounted) return;
       await launchUrl(url, mode: LaunchMode.externalApplication);
     }
   }
@@ -129,7 +137,9 @@ class _DetailScreenState extends State<DetailScreen> {
   Future<void> _abrirEmail() async {
     if (_poi.email == null) return;
     final url = Uri.parse('mailto:${_poi.email}');
+    if (!mounted) return;
     if (await canLaunchUrl(url)) {
+      if (!mounted) return;
       await launchUrl(url);
     }
   }
@@ -172,7 +182,7 @@ class _DetailScreenState extends State<DetailScreen> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.add_location_alt, color: AppColors.primary),
@@ -193,7 +203,7 @@ class _DetailScreenState extends State<DetailScreen> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: AppColors.accent.withOpacity(0.1),
+                        color: AppColors.accent.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(Icons.add, color: AppColors.accent),
@@ -272,7 +282,7 @@ class _DetailScreenState extends State<DetailScreen> {
                                             vertical: 4,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: AppColors.primary.withOpacity(0.1),
+                                            color: AppColors.primary.withValues(alpha: 0.1),
                                             borderRadius: BorderRadius.circular(8),
                                           ),
                                           child: const Text(
@@ -353,7 +363,7 @@ class _DetailScreenState extends State<DetailScreen> {
               background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [ui.cor, ui.cor.withOpacity(0.7)],
+                    colors: [ui.cor, ui.cor.withValues(alpha: 0.7)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -366,7 +376,7 @@ class _DetailScreenState extends State<DetailScreen> {
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(ui.icon, color: Colors.white, size: 40),
@@ -425,7 +435,7 @@ class _DetailScreenState extends State<DetailScreen> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: ui.cor.withOpacity(0.1),
+                          color: ui.cor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -541,7 +551,7 @@ class _DetailScreenState extends State<DetailScreen> {
                             .split(',')
                             .map((c) => Chip(
                                   label: Text(c.trim()),
-                                  backgroundColor: AppColors.secondary.withOpacity(0.1),
+                                  backgroundColor: AppColors.secondary.withValues(alpha: 0.1),
                                   labelStyle: TextStyle(
                                     color: AppColors.secondary,
                                     fontSize: 12,
@@ -587,7 +597,7 @@ class _DetailScreenState extends State<DetailScreen> {
                                           shape: BoxShape.circle,
                                           boxShadow: [
                                             BoxShadow(
-                                              color: ui.cor.withOpacity(0.4),
+                                              color: ui.cor.withValues(alpha: 0.4),
                                               blurRadius: 8,
                                               offset: const Offset(0, 4),
                                             ),
@@ -641,7 +651,7 @@ class _DetailScreenState extends State<DetailScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
+                        color: Colors.red.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -671,7 +681,7 @@ class _DetailScreenState extends State<DetailScreen> {
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, -4),
               ),
@@ -739,9 +749,9 @@ class _DetailScreenState extends State<DetailScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.08),
+          color: AppColors.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -774,9 +784,9 @@ class _DetailScreenState extends State<DetailScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: cor.withOpacity(0.1),
+          color: cor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: cor.withOpacity(0.3)),
+          border: Border.all(color: cor.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

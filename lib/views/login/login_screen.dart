@@ -81,19 +81,14 @@ class _LoginScreenState extends State<LoginScreen>
   /// - Se sucesso: navega para /home
   /// - Se erro: exibe erro no AuthProvider
   Future<void> _fazerLogin() async {
-    print(' Login iniciado...'); // ← ADICIONA
     if (_formKey.currentState?.validate() ?? false) {
       final sucesso = await context.read<AuthProvider>().login(
-            _emailController.text.trim(),
-            _passwordController.text,
-          );
-      print(' Login sucesso: $sucesso');
-      print(' mounted: $mounted');
-      if (sucesso && mounted) {
-        print('Navegando para /shell...');
-        Navigator.pushReplacementNamed(context, '/shell');
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
 
-        /// Quando faz login com sucesso, vai para /shell em vez de /home.
+      if (sucesso && mounted) {
+        Navigator.pushReplacementNamed(context, '/shell');
       }
     }
   }

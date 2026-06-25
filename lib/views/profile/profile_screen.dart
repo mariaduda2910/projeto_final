@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:algarve_explorer/l10n/app_localizations.dart';
+
 import '../../core/constants/app_constants.dart';
+import '../../providers/app_settings_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/favorites_provider.dart';
 import '../../providers/itinerary_provider.dart';
@@ -15,14 +18,11 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String _idioma = 'Português';
-
-  final List<String> _idiomas = [
-    'Português',
-    'English',
-    'Français',
-    'Español',
-    'Italiano',
+  final List<Map<String, String>> _idiomas = [
+    {'code': 'pt', 'label': 'Português'},
+    {'code': 'en', 'label': 'English'},
+    {'code': 'fr', 'label': 'Français'},
+    {'code': 'es', 'label': 'Español'},
   ];
 
   Future<void> _confirmarLogout() async {
@@ -56,6 +56,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -64,7 +66,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Perfil',
+                l10n.profile,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
@@ -112,40 +114,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 32),
 
               Text(
-                'Idioma',
+                l10n.language,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
               ),
               const SizedBox(height: 12),
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _idioma,
-                    isExpanded: true,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    items: _idiomas.map((idioma) {
-                      return DropdownMenuItem(
-                        value: idioma,
-                        child: Text(idioma),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() => _idioma = value);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Idioma alterado: $value'),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                  ),
-                ),
+              Consumer<AppSettingsProvider>(
+                builder: (context, settings, _) {
+                  final selectedValue = _idiomas.any((item) => item['code'] == settings.localeCode)
+                      ? settings.localeCode
+                      : 'pt';
+
+                  return Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: selectedValue,
+                        isExpanded: true,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        items: _idiomas.map((idioma) {
+                          return DropdownMenuItem(
+                            value: idioma['code'],
+                            child: Text(idioma['label'] ?? ''),
+                          );
+                        }).toList(),
+                        onChanged: (value) async {
+                          if (value == null) return;
+                          await context.read<AppSettingsProvider>().setLocale(value);
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${l10n.languageChanged}: ${_idiomas.firstWhere((item) => item['code'] == value)['label']}'),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  );
+                },
               ),
 
               const SizedBox(height: 32),
@@ -162,17 +174,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 builder: (context, fav, _) => _buildStatCard(
                   icon: Icons.favorite,
                   iconColor: Colors.red,
-                  titulo: 'Favoritos',
+                  titulo: l10n.favorites,
                   subtitulo: fav.count == 0
-                      ? 'Ainda sem favoritos guardados'
-                      : '${fav.count} ${fav.count == 1 ? 'local guardado' : 'locais guardados'}',
+                      ? l10n.noFavoritesYet
+                      : '${fav.count} ${fav.count == 1 ? l10n.oneSavedPlace : l10n.savedPlaces}',
                   onTap: fav.count == 0
                       ? null
                       : () => ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                  'Abre o Mapa e toca no ícone ♥ para veres os favoritos'),
-                              duration: Duration(seconds: 3),
+                            SnackBar(
+                              content: Text(l10n.openMapToSeeFavorites),
+                              duration: const Duration(seconds: 3),
                             ),
                           ),
                 ),
@@ -181,10 +192,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Consumer<ItineraryProvider>(
                 builder: (context, it, _) => _buildStatCard(
                   icon: Icons.route,
-                  titulo: 'Roteiros',
+                  titulo: l10n.itineraries,
                   subtitulo: it.roteiros.isEmpty
-                      ? 'Cria o teu primeiro roteiro'
-                      : '${it.roteiros.length} ${it.roteiros.length == 1 ? 'roteiro' : 'roteiros'} planeado${it.roteiros.length == 1 ? '' : 's'}',
+                      ? l10n.createFirstItinerary
+                      : '${it.roteiros.length} ${it.roteiros.length == 1 ? l10n.oneItinerary : l10n.itinerariesCount} ${it.roteiros.length == 1 ? '' : l10n.planned}',
                   onTap: () {
                     Navigator.push(
                       context,
@@ -203,9 +214,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _confirmarLogout,
                   icon: const Icon(Icons.logout, color: AppColors.error),
-                  label: const Text(
-                    'Terminar sessão',
-                    style: TextStyle(color: AppColors.error),
+                  label: Text(
+                    l10n.logout,
+                    style: const TextStyle(color: AppColors.error),
                   ),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppColors.error),
